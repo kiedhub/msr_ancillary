@@ -13,28 +13,43 @@ source $FUNC_LIB_SCRIPT_DIR/ancillary.conf
 # RADIUS specific library
 aaa_library()
 {
+  # set interface type
+  if [ $aaaInterfaceVlan = "0" ]; then
+    aaaIf="$aaaInterface"
+    isVlanIf="false"
+  else
+    aaaIf="$aaaInterface.$aaaInterfaceVlan"
+    isVlanIf="true"
+  fi
+    
   # adds a physical interface to the radius bridge (for external reachability)
   attach_bridge_interface()
   {
-    if [ $(sudo brctl show $aaaBridgeName |grep $aaaInterface |wc -l) -gt 0 ]; then
-      echo "Interface $aaaInterface already assigned to bridge, nothing to do"
-      sudo brctl show $aaaBridgeName |grep $aaaInterface
+    # create vlan interface, if necessary 
+    if [ $(sudo ip link show | grep "$aaaIf" | wc -l) -lt 1 ]; then
+      [ $isVlanIf = "true" ] && create_vlan_interface $aaaIf
+    fi
+
+    if [ $(sudo brctl show $aaaBridgeName |grep $aaaIf |wc -l) -gt 0 ]; then
+      echo "Interface $aaaIf already assigned to bridge, nothing to do"
+      sudo brctl show $aaaBridgeName |grep $aaaIf
       return
-    elif [ $(sudo brctl show | grep $aaaInterface |wc -l) -gt 0 ]; then
-      echo "Interface $aaaInterface assigned to another bridge, please remove interface first"
+    elif [ $(sudo brctl show | grep $aaaIf |wc -l) -gt 0 ]; then
+      echo "Interface $aaaIf assigned to another bridge, please remove interface first"
       return
     fi
   
-    sudo ip link set dev $aaaInterface master $aaaBridgeName
+    sudo ip link set dev $aaaIf master $aaaBridgeName
   }
 
   detach_bridge_interface()
   {
-    if [ ! $(sudo brctl show $aaaBridgeName |grep $aaaInterface |wc -l) -gt 0 ]; then 
-      echo "Interface $aaaInterface not attached to bridge $aaaBridgeName"
-      return
+    if [ $(sudo brctl show $aaaBridgeName |grep $aaaIf |wc -l) -gt 0 ]; then 
+      sudo ip link set dev $aaaInterface nomaster
     fi
-    sudo ip link set dev $aaaInterface nomaster
+
+    [ $isVlanIf = "true" ] && delete_vlan_interface $aaaIf
+
   }
 
   build_compose_file() {
@@ -182,6 +197,33 @@ commons_library()
         ;;
     esac
   }
+  create_vlan_interface()
+  {
+    vlanInterface=$1
+    ifId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $1 }')
+    vlanId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $2 }')
+    
+    sudo ip link add link $ifId name $vlanInterface type vlan id $vlanId 
+
+    if [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -lt 1 ]; then
+      echo "create_vlan_interface: Failed creating vlan interface $vlanInterface, exiting"
+      exit
+    else
+      sudo ip link set dev $vlanInterface up
+    fi
+  }
+
+  delete_vlan_interface()
+  {
+    vlanInterface=$1
+    if [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -gt 0 ]; then
+      sudo ip link delete $vlanInterface
+      if [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -gt 0 ]; then
+        echo "delete_vlan_interface: Failed deleting interface $vlanInterface"
+      fi
+    fi
+  }
+
 
   return
 }

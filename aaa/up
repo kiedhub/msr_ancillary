@@ -16,7 +16,6 @@ composeDestFile="$AAA_SCRIPT_DIR/compose.yaml"
 #echo "Src $composeSampleFile Dst $composeDestFile"
 
 build_compose_file
-#aaa_up
 compose_up $SERVICE_LIBRARY 
 attach_bridge_interface
 write_running_config
