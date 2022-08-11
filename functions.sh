@@ -96,28 +96,42 @@ aaa_library()
 
 speedtest_library()
 {
+  # set interface type
+  if [ $speedtestInterfaceVlan = "0" ]; then
+    speedtestIf="$speedtestInterface"
+    isVlanIf="false"
+  else
+    speedtestIf="$speedtestInterface.$speedtestInterfaceVlan"
+    isVlanIf="true"
+  fi
+
   # adds a physical interface to the radius bridge (for external reachability)
   attach_bridge_interface()
   {
-    if [ $(sudo brctl show $speedtestBridgeName |grep $speedtestInterface |wc -l) -gt 0 ]; then
-      echo "Interface $speedtestInterface already assigned to bridge, nothing to do"
-      sudo brctl show $speedtestBridgeName |grep $speedtestInterface
+    # create vlan interface, if necessary 
+    if [ $(sudo ip link show | grep "$speedtestIf" | wc -l) -lt 1 ]; then
+      [ $isVlanIf = "true" ] && create_vlan_interface $speedtestIf
+    fi
+
+    if [ $(sudo brctl show $speedtestBridgeName |grep $speedtestIf |wc -l) -gt 0 ]; then
+      echo "Interface $speedtestIf already assigned to bridge, nothing to do"
+      sudo brctl show $speedtestBridgeName |grep $speedtestIf
       return
-    elif [ $(sudo brctl show | grep $speedtestInterface |wc -l) -gt 0 ]; then
-      echo "Interface $speedtestInterface assigned to another bridge, please remove interface first"
+    elif [ $(sudo brctl show | grep $speedtestIf |wc -l) -gt 0 ]; then
+      echo "Interface $speedtestIf assigned to another bridge, please remove interface first"
       return
     fi
   
-    sudo ip link set dev $speedtestInterface master $speedtestBridgeName
+    sudo ip link set dev $speedtestIf master $speedtestBridgeName
   }
 
   detach_bridge_interface()
   {
-    if [ ! $(sudo brctl show $speedtestBridgeName |grep $speedtestInterface |wc -l) -gt 0 ]; then 
-      echo "Interface $speedtestInterface not attached to bridge $speedtestBridgeName"
-      return
+    if [ $(sudo brctl show $speedtestBridgeName |grep $speedtestIf |wc -l) -gt 0 ]; then 
+      sudo ip link set dev $speedtestIf nomaster
     fi
-    sudo ip link set dev $speedtestInterface nomaster
+
+    [ $isVlanIf = "true" ] && delete_vlan_interface $aaaIf
   }
 
   build_compose_file() 
