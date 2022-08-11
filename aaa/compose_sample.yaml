@@ -9,7 +9,7 @@ services:
       - "57000:22"
     networks:
       rad_net:
-        ipv4_address: 172.16.0.2 
+        ipv4_address: $aaa1IpAddress
     volumes:
       - ./volumes/log/:/var/log/radius/
       - ./volumes/customize/:/usr/local/etc/radius/
@@ -21,7 +21,7 @@ services:
       - "57001:22"
     networks:
       rad_net:
-        ipv4_address: 172.16.0.3 
+        ipv4_address: $aaa2IpAddress
     volumes:
       - ./volumes/log/:/var/log/radius/
       - ./volumes/customize/:/usr/local/etc/radius/
@@ -33,7 +33,7 @@ services:
       - "57002:22"
     networks:
       rad_net:
-        ipv4_address: 172.16.0.4 
+        ipv4_address: $aaaClientIpAddress
     volumes:
       - ./volumes/customize/aaa_client/:/usr/local/etc/radius/
     cap_add:
@@ -47,4 +47,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.16.0.0/24
+        - subnet: $aaaBridgeSubnet

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="speedtest"
+
+# grab configuration
+ST_SOURCE=${BASH_SOURCE[0]}
+ST_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#source $ST_SCRIPT_DIR/../ancillary.conf
+. $ST_SCRIPT_DIR/../functions.sh
+
+cd $ST_SCRIPT_DIR
+
+clean_up_directory

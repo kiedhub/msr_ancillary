@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="speedtest"
+
+# grab configuration
+ST_SOURCE=${BASH_SOURCE[0]}
+ST_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#source $ST_SCRIPT_DIR/../ancillary.conf
+. $ST_SCRIPT_DIR/../functions.sh
+
+cd $ST_SCRIPT_DIR
+
+composeSampleFile="$ST_SCRIPT_DIR/compose_sample.yaml"
+composeDestFile="$ST_SCRIPT_DIR/compose.yaml"
+
+#echo "Src $composeSampleFile Dst $composeDestFile"
+
+build_compose_file
+compose_up speedtest
+attach_bridge_interface
+write_running_config
+
+
+
+
+#sudo docker-compose -p speedtest -f compose.yaml up -d

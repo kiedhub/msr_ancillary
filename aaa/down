@@ -13,5 +13,5 @@ cd $AAA_SCRIPT_DIR
 source $AAA_SCRIPT_DIR/running.conf
 
 detach_bridge_interface
-aaa_down
-#sudo docker-compose -p radius -f compose.yaml down
+compose_down $SERVICE_LIBRARY
+remove_running_conf_file
