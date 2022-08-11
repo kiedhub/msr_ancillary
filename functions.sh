@@ -131,7 +131,7 @@ speedtest_library()
       sudo ip link set dev $speedtestIf nomaster
     fi
 
-    [ $isVlanIf = "true" ] && delete_vlan_interface $aaaIf
+    [ $isVlanIf = "true" ] && delete_vlan_interface $speedtestIf
   }
 
   build_compose_file() 
