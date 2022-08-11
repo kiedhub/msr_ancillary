@@ -1,0 +1,25 @@
+#!/bin/ash
+
+shared_key=testing123
+aaa_server_ip_1=172.16.0.2
+aaa_server_ip_2=172.16.0.3
+
+BASE_DIR=$(dirname "$0")
+
+test_sequence()
+{
+  sleep 1
+  radclient -f $BASE_DIR/auth -c 1 -r 2 -t 1 -x $aaa_server_ip auth $shared_key
+
+  sleep 1
+  radclient -f $BASE_DIR/acct-start -c 1 -r 2 -t 1 -x $aaa_server_ip acct $shared_key
+
+  sleep 1
+  radclient -f $BASE_DIR/acct-stop -c 1 -r 2 -t 1 -x $aaa_server_ip acct $shared_key
+}
+
+aaa_server_ip=$aaa_server_ip_1
+test_sequence
+
+aaa_server_ip=$aaa_server_ip_2
+test_sequence

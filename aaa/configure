@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+###!!! TO BE TESTED !!!###
+
+# configure users or clients
+conf_file=$1
+
+if [ $conf_file == "users" ];then
+  sudo vi ./volumes/customize/authorize
+elif [ $conf_file == "clients" ];then
+  sudo vi ./volumes/customize/clients.conf
+fi

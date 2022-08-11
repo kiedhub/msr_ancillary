@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="aaa"
+
+# grab configuration
+SOURCE=${BASH_SOURCE[0]}
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#source $SCRIPT_DIR/../ancillary.conf
+source $SCRIPT_DIR/../functions.sh
+
+create_compose_file()
+{
+  cat $SCRIPT_DIR/compose_sample.yaml > $SCRIPT_DIR/compose.yaml
+}
+
+
+#setup_bridge()
+#{
+#  if [ $(sudo brctl show $aaaBridgeName |grep $aaaInterface |wc -l) -gt 0 ]; then
+#    echo "Interface $aaaInterface already assigned to bridge, nothing to do"
+#    sudo brctl show aaa |grep ens7
+#    exit
+#  elif [ $(sudo brctl show | grep $aaaInterface |wc -l) -gt 0 ]; then
+#    echo "Interface $aaaInterface assigned to another bridge, please remove interface first"
+#    exit
+#  fi
+#
+#  sudo ip link set dev $aaaInterface master $aaaBridgeName
+#}
+
+## main
+#create_compose_file
+#setup_bridge
+
+echo "reached end without exit"
+
+#sudo docker-compose -p radius -f compose.yaml up -d

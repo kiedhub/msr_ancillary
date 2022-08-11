@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+###!!! TO BE TESTED !!!###
+
+# configure users or clients
+echo "Cleaning up configuration ..."
+
+echo "Re-setting ownership to $USER:$USER"
+sudo chown -R $USER:$USER ./volumes
+
+echo "Deleting log files"
+sudo rm -r ./volumes/log/*

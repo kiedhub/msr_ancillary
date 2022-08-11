@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+cont_name=$1
+
+#host_port=$(sudo docker ps -a |grep $cont_name |awk '{ print $12 }' | grep -o 5505[0-9])
+host_port=$(sudo docker ps -a |grep [a-zA-Z0-9_]*$cont_name[a-zA-Z0-9_]* |grep -o \.[0-9]:5700[0-9] |grep -o 5700[0-9])
+
+ssh -o StrictHostKeyChecking=no \
+  -o GlobalKnownHostsFile=/dev/null \
+  -o UserKnownHostsFile=/dev/null  \
+  root@localhost \
+  -p $host_port
