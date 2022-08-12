@@ -20,7 +20,7 @@ services:
       - ./config:/config
     networks:
       speedt_net:
-        ipv4_address: 100.100.0.2
+        ipv4_address: 100.80.0.2
     restart: unless-stopped
 
 networks:
@@ -31,4 +31,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 100.100.0.0/24
+        - subnet: 100.80.0.0/24

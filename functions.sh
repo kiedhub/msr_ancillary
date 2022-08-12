@@ -27,7 +27,10 @@ aaa_library()
   {
     # create vlan interface, if necessary 
     if [ $(sudo ip link show | grep "$aaaIf" | wc -l) -lt 1 ]; then
-      [ $isVlanIf = "true" ] && create_vlan_interface $aaaIf
+      if [ $isVlanIf = "true" ]; then
+        ipv4_to_lamac $aaa1IpAddress
+        create_vlan_interface $aaaIf
+      fi
     fi
 
     if [ $(sudo brctl show $aaaBridgeName |grep $aaaIf |wc -l) -gt 0 ]; then
@@ -110,7 +113,10 @@ speedtest_library()
   {
     # create vlan interface, if necessary 
     if [ $(sudo ip link show | grep "$speedtestIf" | wc -l) -lt 1 ]; then
-      [ $isVlanIf = "true" ] && create_vlan_interface $speedtestIf
+      if [ $isVlanIf = "true" ]; then
+        ipv4_to_lamac $speedtestIpAddress
+        create_vlan_interface $speedtestIf
+      fi
     fi
 
     if [ $(sudo brctl show $speedtestBridgeName |grep $speedtestIf |wc -l) -gt 0 ]; then
@@ -217,12 +223,13 @@ commons_library()
     ifId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $1 }')
     vlanId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $2 }')
     
-    sudo ip link add link $ifId name $vlanInterface type vlan id $vlanId 
+    sudo ip link add link $ifId address $laMac name $vlanInterface type vlan id $vlanId 
 
     if [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -lt 1 ]; then
       echo "create_vlan_interface: Failed creating vlan interface $vlanInterface, exiting"
       exit
     else
+      sudo ip link set dev $ifId up
       sudo ip link set dev $vlanInterface up
     fi
   }
@@ -236,6 +243,23 @@ commons_library()
         echo "delete_vlan_interface: Failed deleting interface $vlanInterface"
       fi
     fi
+  }
+
+  ipv4_to_lamac()
+  {
+    ipv4Addr=$1
+  
+    oct1=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $1 }')
+    oct2=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $2 }')
+    oct3=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $3 }')
+    oct4=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $4 }')
+
+    [ $oct1 -lt 16 ] && mac1=$(printf '0%x\n' $oct1) || mac1=$(printf '%x\n' $oct1)
+    [ $oct2 -lt 26 ] && mac2=$(printf '0%x\n' $oct2) || mac2=$(printf '%x\n' $oct2)
+    [ $oct3 -lt 36 ] && mac3=$(printf '0%x\n' $oct3) || mac3=$(printf '%x\n' $oct3)
+    [ $oct4 -lt 46 ] && mac4=$(printf '0%x\n' $oct4) || mac4=$(printf '%x\n' $oct4)
+
+    laMac="02:00:$mac1:$mac2:$mac3:$mac4"
   }
 
 

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+ipv4_to_mac()
+{
+  ipv4Addr=$1
+
+  oct1=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $1 }')
+  oct2=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $2 }')
+  oct3=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $3 }')
+  oct4=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $4 }')
+  [ $oct1 -lt 16 ] && mac1=$(printf '0%x\n' $oct1) || mac1=$(printf '%x\n' $oct1)
+  [ $oct2 -lt 26 ] && mac2=$(printf '0%x\n' $oct2) || mac2=$(printf '%x\n' $oct2)
+  [ $oct3 -lt 36 ] && mac3=$(printf '0%x\n' $oct3) || mac3=$(printf '%x\n' $oct3)
+  [ $oct4 -lt 46 ] && mac4=$(printf '0%x\n' $oct4) || mac4=$(printf '%x\n' $oct4)
+  laMac="02:00:$mac1:$mac2:$mac3:$mac4"
+  echo $laMac
+  #echo $mac1
+  echo $oct1:$oct2:$oct3:$oct4
+
+}
+
+ipv4_to_mac $1
