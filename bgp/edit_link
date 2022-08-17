@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="bgp"
+DEBUG="TRUE"
+
+# grab configuration
+BGP_SOURCE=${BASH_SOURCE[0]}
+BGP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+. $BGP_SCRIPT_DIR/../functions.sh
+
+cd $BGP_SCRIPT_DIR
+
+isp=$1
+action=$2
+
+usage()
+{
+  echo "Sets a bridge interface to an isp up or down." 
+  echo "Usage: edit_link <isp> <action>"
+  echo "  isp: one of \"isp1\" or \"isp2\""
+  echo "  action: one of \"up\" or \"down\""
+  exit 0
+}
+
+# checking parameters
+[ $# -lt 2 ] && { echo "Not enough parameters!"; usage; exit; } 
+[ $# -gt 2 ] && { echo "Too many parameters!"; usage; exit; } 
+[ ! $isp = "isp1" ] && [ ! $isp = "isp2" ] && { echo "ISP: \"$isp\" does not exist!"; usage; exit; }
+[ ! $action = "up" ] && [ ! $action = "down" ] && { echo "ACTION: \"$action\" does not exist!"; usage; exit; }
+
+set_bridge_interface $isp $action
+
+#composeSampleFile="$BGP_SCRIPT_DIR/compose_sample.yaml"
+#composeDestFile="$BGP_SCRIPT_DIR/compose.yaml"
+#
+#build_compose_file
+#compose_up $SERVICE_LIBRARY 
+#attach_bridge_interface
+#write_running_config

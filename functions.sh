@@ -184,7 +184,6 @@ speedtest_library()
 bgp_library()
 {
   [ $DEBUG = "TRUE" ] && echo "${FUNCNAME[0]}"
-  #[ $DEBUG = "TRUE" ] && echo "bgp_library: library called"
 
   # set interface type
   if [ $bgp1InterfaceVlan = "0" ]; then
@@ -208,7 +207,7 @@ bgp_library()
   # adds a physical interfaces to a bgp bridge (for external reachability)
   attach_bridge_interface()
   {
-  $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+  [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
     # create vlan interface for first bgp connection (if necessary)
     if [ $(sudo ip link show | grep "$bgp1If" | wc -l) -lt 1 ]; then
       if [ $bgp1isVlanIf = "true" ]; then
@@ -246,6 +245,32 @@ bgp_library()
     fi
   
     sudo ip link set dev $bgp2If master $bgp2BridgeName
+  }
+
+  set_bridge_interface()
+  {
+    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}" 
+    [ $DEBUG = "TRUE" ] && echo "    isp: $1 action: $2"
+    [ $DEBUG = "TRUE" ] && echo "    bgp1If: $bgp1If bgp2If: $bgp2If"
+    isp=$1
+    action=$2
+    [ $isp = "isp1" ] && bridgeName=$bgp1BridgeName
+    [ $isp = "isp2" ] && bridgeName=$bgp2BridgeName
+
+    case $action in
+      up)
+        [ $DEBUG = "TRUE" ] && echo "    sudo ip link set dev $bridgeName up"
+        sudo ip link set dev $bridgeName up
+        ;;
+      down)
+        [ $DEBUG = "TRUE" ] && echo "    sudo ip link set dev $bridgeName down"
+        sudo ip link set dev $bridgeName down
+        ;;
+      *)
+        [ $DEBUG = "TRUE" ] && echo "    \"$action\" is no valid action!"
+        exit
+    esac
+
   }
 
   detach_bridge_interface()
@@ -310,7 +335,7 @@ bgp_library()
  
   clean_up_directory()
   {
-    $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
     echo "Re-setting ownership to $USER:$USER"
     sudo chown -R $USER:$USER $BGP_SCRIPT_DIR/volumes
     
