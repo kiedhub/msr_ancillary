@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 SERVICE_LIBRARY="bgp"
+#DEBUG="TRUE"
 
 # grab configuration
 BGP_SOURCE=${BASH_SOURCE[0]}
 BGP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-#source $BGP_SCRIPT_DIR/../ancillary.conf
+
 . $BGP_SCRIPT_DIR/../functions.sh
 
 cd $BGP_SCRIPT_DIR
@@ -13,11 +14,7 @@ cd $BGP_SCRIPT_DIR
 composeSampleFile="$BGP_SCRIPT_DIR/compose_sample.yaml"
 composeDestFile="$BGP_SCRIPT_DIR/compose.yaml"
 
-#echo "Src $composeSampleFile Dst $composeDestFile"
-
 build_compose_file
 compose_up $SERVICE_LIBRARY 
 attach_bridge_interface
 write_running_config
-
-sudo docker-compose -p bgp -f compose.yaml up -d

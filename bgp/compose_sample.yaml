@@ -9,7 +9,7 @@ services:
       - "55052:22"
     networks:
       msr_isp1:
-        ipv4_address: 192.168.1.5
+        ipv4_address: $bgp1IpAddress
       isp1_isp3:
         ipv4_address: 10.0.1.5
     volumes:
@@ -22,7 +22,7 @@ services:
       - "55053:22"
     networks:
       msr_isp2:
-        ipv4_address: 192.168.2.2
+        ipv4_address: $bgp2IpAddress
       isp2_isp3:
         ipv4_address: 10.0.2.2
     volumes:
@@ -60,23 +60,23 @@ networks:
   msr_isp1:
     driver: bridge
     driver_opts:
-      com.docker.network.bridge.name: msr-isp1
+      com.docker.network.bridge.name: $bgp1BridgeName
     ipam:
       driver: default
       config:
-        - subnet: 192.168.1.0/24
+        - subnet: $bgp1BridgeSubnet
   msr_isp2:
     driver: bridge
     driver_opts:
-      com.docker.network.bridge.name: msr-isp2
+      com.docker.network.bridge.name: $bgp2BridgeName
     ipam:
       driver: default
       config:
-        - subnet: 192.168.2.0/24
+        - subnet: $bgp2BridgeSubnet
   isp1_isp3:
     driver: bridge
     driver_opts:
-      com.docker.network.bridge.name: isp1-isp3
+      com.docker.network.bridge.name: $bgp3BridgeName
     ipam:
       driver: default
       config:
@@ -84,7 +84,7 @@ networks:
   isp2_isp3:
     driver: bridge
     driver_opts:
-      com.docker.network.bridge.name: isp2-isp3
+      com.docker.network.bridge.name: $bgp4BridgeName
     ipam:
       driver: default
       config:
@@ -92,7 +92,7 @@ networks:
   isp3_dn:
     driver: bridge
     driver_opts:
-      com.docker.network.bridge.name: isp3-dn
+      com.docker.network.bridge.name: $bgp5BridgeName
     ipam:
       driver: default
       config:

@@ -1,3 +1,20 @@
 #!/usr/bin/env bash
 
-sudo docker-compose -p routing -f compose.yaml down
+SERVICE_LIBRARY="bgp"
+#DEBUG="TRUE"
+
+# grab configuration
+BGP_SOURCE=${BASH_SOURCE[0]}
+BGP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. $BGP_SCRIPT_DIR/../functions.sh
+
+cd $BGP_SCRIPT_DIR
+
+# overwrite any eventually changed configuration
+source $BGP_SCRIPT_DIR/running.conf
+
+detach_bridge_interface
+compose_down $SERVICE_LIBRARY
+remove_running_conf_file
+
+#sudo docker-compose -p routing -f compose.yaml down
