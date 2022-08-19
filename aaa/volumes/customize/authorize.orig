@@ -1,9 +1,7 @@
-
-testing Cleartext-Password := "password"
-
 DEFAULT Auth-Type := Accept
         Casa-Vrf-Name := "dh_access"
 
+#testing Cleartext-Password := "password"
 
 #
 # 	Configuration file for the rlm_files module.

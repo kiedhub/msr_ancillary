@@ -24,6 +24,8 @@ aaa_library()
     isVlanIf="true"
   fi
     
+  aaaBS=$(echo $aaaBridgeSubnet | sed -e "s.\/.\\\/.g")
+
   # adds a physical interface to the radius bridge (for external reachability)
   attach_bridge_interface()
   {
@@ -58,7 +60,6 @@ aaa_library()
   }
 
   build_compose_file() {
-    aaaBS=$(echo $aaaBridgeSubnet | sed -e "s.\/.\\\/.g")
     #echo $aaaBS
     cat $composeSampleFile | \
     sed -e "s/\$aaaBridgeName/$aaaBridgeName/g" \
@@ -67,6 +68,44 @@ aaa_library()
       -e "s/\$aaaClientIpAddress/$aaaClientIpAddress/g" | \
       sed -e "s/\$aaaBridgeSubnet/$aaaBS/g" > $composeDestFile
     #cat $temp_yaml_file
+  }
+
+  build_configuration()
+  {
+    [ $DEBUG = "TRUE" ] && echo "${FUNCNAME[0]}"
+    # authorize, clients.conf, testrun
+    
+    #owner=$(ls -l $authDestFile | awk '{ print $3":"$4 }')
+    owner="root:systemd-journal"
+
+    # authorize file
+    [ $DEBUG = "TRUE" ] && echo "  Building $authDestFile"
+    sudo chown $USER:$USER $authDestFile
+    sudo cat $authTemplFile | \
+      sed -e "s/\$aaaCasaVrfName/$aaaCasaVrfName/g" > $authDestFile
+    #[ $DEBUG = "TRUE" ] && head $authDestFile
+    sudo chown $owner $authDestFile
+
+    # clients.conf file
+    [ $DEBUG = "TRUE" ] && echo "  Building $clientsDestFile"
+    sudo chown $USER:$USER $clientsDestFile
+    [ $DEBUG = "TRUE" ] && echo "  Parameters: $aaaBridgeSubnet, $aaaSecret, $clientsDestFile"
+    sudo cat $clientsTemplFile | \
+      sed -e "s/\$aaaBridgeSubnet/$aaaBS/g" \
+          -e "s/\$aaaSecret/$aaaSecret/g" > $clientsDestFile
+    [ $DEBUG = "TRUE" ] && head $clientsDestFile
+    sudo chown $owner $clientsDestFile
+    
+    # testrun file
+    [ $DEBUG = "TRUE" ] && echo "  Building $testrunDestFile"
+    #sudo chown $USER:$USER $testrunDestFile
+    #[ $DEBUG = "TRUE" ] && echo "  Parameters: $aaaBridgeSubnet, $aaaSecret, $testrunDestFile"
+    cat $testrunTemplFile | \
+      sed -e "s/\$aaaSecret/$aaaSecret/g" \
+          -e "s/\$aaa1IpAddress/$aaa1IpAddress/g" \
+          -e "s/\$aaa2IpAddress/$aaa2IpAddress/g" > $testrunDestFile
+    [ $DEBUG = "TRUE" ] && head $testrunDestFile
+    #sudo chown $owner $testrunDestFile
   }
 
   remove_running_conf_file()

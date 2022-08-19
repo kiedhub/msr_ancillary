@@ -1,8 +1,8 @@
 #!/bin/ash
 
-shared_key=testing123
-aaa_server_ip_1=172.16.1.13
-aaa_server_ip_2=172.16.1.3
+shared_key=$aaaSecret
+aaa_server_ip_1=$aaa1IpAddress
+aaa_server_ip_2=$aaa2IpAddress
 # original
 #aaa_server_ip_1=172.16.0.2
 #aaa_server_ip_2=172.16.0.3

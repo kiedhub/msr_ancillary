@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-element=$1
+[ $# -lt 1 ] && element="all" || element=$1
 
 if [ $element == "all" ];then
   element=aaa1

@@ -219,7 +219,7 @@ client localhost {
 
 # IPv4 Client
 client msr {
-  ipaddr = 172.16.1.0/24
+  ipaddr = 0.0.0.0/0
   secret = testing123
 }
 # IPv6 Client
