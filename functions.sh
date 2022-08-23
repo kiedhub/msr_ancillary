@@ -7,7 +7,9 @@ FUNC_LIB_SOURCE=${BASH_SOURCE[0]}
 FUNC_LIB_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source $FUNC_LIB_SCRIPT_DIR/ancillary.conf
 
-[ -z $DEBUG ] && DEBUG="FALSE"
+LIBS_DIR="$FUNC_LIB_SCRIPT_DIR/libs"
+
+[ -z $DEBUG ] && DEBUG=false
 
 #echo "SOURCE: $SOURCE"
 #echo "SCRIPT_DIR: $SCRIPT_DIR"
@@ -72,39 +74,39 @@ aaa_library()
 
   build_configuration()
   {
-    [ $DEBUG = "TRUE" ] && echo "${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
     # authorize, clients.conf, testrun
     
     #owner=$(ls -l $authDestFile | awk '{ print $3":"$4 }')
     owner="root:systemd-journal"
 
     # authorize file
-    [ $DEBUG = "TRUE" ] && echo "  Building $authDestFile"
+    [ $DEBUG = true ] && echo "  Building $authDestFile"
     sudo chown $USER:$USER $authDestFile
     sudo cat $authTemplFile | \
       sed -e "s/\$aaaCasaVrfName/$aaaCasaVrfName/g" > $authDestFile
-    #[ $DEBUG = "TRUE" ] && head $authDestFile
+    #[ $DEBUG = true ] && head $authDestFile
     sudo chown $owner $authDestFile
 
     # clients.conf file
-    [ $DEBUG = "TRUE" ] && echo "  Building $clientsDestFile"
+    [ $DEBUG = true ] && echo "  Building $clientsDestFile"
     sudo chown $USER:$USER $clientsDestFile
-    [ $DEBUG = "TRUE" ] && echo "  Parameters: $aaaBridgeSubnet, $aaaSecret, $clientsDestFile"
+    [ $DEBUG = true ] && echo "  Parameters: $aaaBridgeSubnet, $aaaSecret, $clientsDestFile"
     sudo cat $clientsTemplFile | \
       sed -e "s/\$aaaBridgeSubnet/$aaaBS/g" \
           -e "s/\$aaaSecret/$aaaSecret/g" > $clientsDestFile
-    [ $DEBUG = "TRUE" ] && head $clientsDestFile
+    [ $DEBUG = true ] && head $clientsDestFile
     sudo chown $owner $clientsDestFile
     
     # testrun file
-    [ $DEBUG = "TRUE" ] && echo "  Building $testrunDestFile"
+    [ $DEBUG = true ] && echo "  Building $testrunDestFile"
     #sudo chown $USER:$USER $testrunDestFile
-    #[ $DEBUG = "TRUE" ] && echo "  Parameters: $aaaBridgeSubnet, $aaaSecret, $testrunDestFile"
+    #[ $DEBUG = true ] && echo "  Parameters: $aaaBridgeSubnet, $aaaSecret, $testrunDestFile"
     cat $testrunTemplFile | \
       sed -e "s/\$aaaSecret/$aaaSecret/g" \
           -e "s/\$aaa1IpAddress/$aaa1IpAddress/g" \
           -e "s/\$aaa2IpAddress/$aaa2IpAddress/g" > $testrunDestFile
-    [ $DEBUG = "TRUE" ] && head $testrunDestFile
+    [ $DEBUG = true ] && head $testrunDestFile
     #sudo chown $owner $testrunDestFile
   }
 
@@ -222,7 +224,7 @@ speedtest_library()
 
 bgp_library()
 {
-  [ $DEBUG = "TRUE" ] && echo "${FUNCNAME[0]}"
+  [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
 
   # set interface type
   if [ $bgp1InterfaceVlan = "0" ]; then
@@ -232,7 +234,7 @@ bgp_library()
     bgp1If="$bgp1Interface.$bgp1InterfaceVlan"
     bgp1isVlanIf="true"
   fi
-  [ $DEBUG = "TRUE" ] && echo "  bgp1If: $bgp1If"
+  [ $DEBUG = true ] && echo "  bgp1If: $bgp1If"
 
   if [ $bgp2InterfaceVlan = "0" ]; then
     bgp2If="$bgp2Interface"
@@ -241,12 +243,12 @@ bgp_library()
     bgp2If="$bgp2Interface.$bgp2InterfaceVlan"
     bgp2isVlanIf="true"
   fi
-  [ $DEBUG = "TRUE" ] && echo "  bgp2If: $bgp2If"
+  [ $DEBUG = true ] && echo "  bgp2If: $bgp2If"
     
   # adds a physical interfaces to a bgp bridge (for external reachability)
   attach_bridge_interface()
   {
-  [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+  [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     # create vlan interface for first bgp connection (if necessary)
     if [ $(sudo ip link show | grep "$bgp1If" | wc -l) -lt 1 ]; then
       if [ $bgp1isVlanIf = "true" ]; then
@@ -288,9 +290,9 @@ bgp_library()
 
   set_bridge_interface()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}" 
-    [ $DEBUG = "TRUE" ] && echo "    isp: $1 action: $2"
-    [ $DEBUG = "TRUE" ] && echo "    bgp1If: $bgp1If bgp2If: $bgp2If"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}" 
+    [ $DEBUG = true ] && echo "    isp: $1 action: $2"
+    [ $DEBUG = true ] && echo "    bgp1If: $bgp1If bgp2If: $bgp2If"
     isp=$1
     action=$2
     [ $isp = "isp1" ] && bridgeName=$bgp1BridgeName
@@ -298,15 +300,15 @@ bgp_library()
 
     case $action in
       up)
-        [ $DEBUG = "TRUE" ] && echo "    sudo ip link set dev $bridgeName up"
+        [ $DEBUG = true ] && echo "    sudo ip link set dev $bridgeName up"
         sudo ip link set dev $bridgeName up
         ;;
       down)
-        [ $DEBUG = "TRUE" ] && echo "    sudo ip link set dev $bridgeName down"
+        [ $DEBUG = true ] && echo "    sudo ip link set dev $bridgeName down"
         sudo ip link set dev $bridgeName down
         ;;
       *)
-        [ $DEBUG = "TRUE" ] && echo "    \"$action\" is no valid action!"
+        [ $DEBUG = true ] && echo "    \"$action\" is no valid action!"
         exit
     esac
 
@@ -314,7 +316,7 @@ bgp_library()
 
   detach_bridge_interface()
   { 
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     if [ $(sudo brctl show $bgp1BridgeName |grep $bgp1If |wc -l) -gt 0 ]; then 
       sudo ip link set dev $bgp1Interface nomaster
     fi
@@ -331,11 +333,11 @@ bgp_library()
 
   build_compose_file() 
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     bgp1BS=$(echo $bgp1BridgeSubnet | sed -e "s.\/.\\\/.g")
     bgp2BS=$(echo $bgp2BridgeSubnet | sed -e "s.\/.\\\/.g")
-    [ $DEBUG = "TRUE" ] && echo "    bgp1BS: $bgp1BS"
-    [ $DEBUG = "TRUE" ] && echo "    bgp2BS: $bgp2BS"
+    [ $DEBUG = true ] && echo "    bgp1BS: $bgp1BS"
+    [ $DEBUG = true ] && echo "    bgp2BS: $bgp2BS"
 
     cat $composeSampleFile | \
     sed -e "s/\$bgp1IpAddress/$bgp1IpAddress/g" \
@@ -348,12 +350,12 @@ bgp_library()
       sed -e "s/\$bgp1BridgeSubnet/$bgp1BS/g" \
       -e "s/\$bgp2BridgeSubnet/$bgp2BS/g" > $composeDestFile
     
-    [ $DEBUG = "TRUE" ] && echo "    created compose file $composeDestFile"
+    [ $DEBUG = true ] && echo "    created compose file $composeDestFile"
   }
 
   remove_running_conf_file()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     # remove old file
     if [ -e $BGP_SCRIPT_DIR/running.conf ]; then
       sudo chmod +w $BGP_SCRIPT_DIR/running.conf
@@ -363,7 +365,7 @@ bgp_library()
 
   write_running_config()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     remove_running_conf_file
     echo "# RUNNING CONFIGURATION, DO NOT EDIT THIS FILE!!!" > $BGP_SCRIPT_DIR/running.conf
     cat $FUNC_LIB_SCRIPT_DIR/ancillary.conf >> $BGP_SCRIPT_DIR/running.conf
@@ -374,7 +376,7 @@ bgp_library()
  
   clean_up_directory()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     echo "Re-setting ownership to $USER:$USER"
     sudo chown -R $USER:$USER $BGP_SCRIPT_DIR/volumes
     
@@ -384,12 +386,34 @@ bgp_library()
 
 }
 
+subscriber_library()
+{
+  [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
+  setup_subscriber()
+  {
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
+    # check if vlan or qinq
+    [ $(echo $subInterface | grep "\." | wc -l) -gt 0 ] && isVlanIf=true || isVlanIf=false ; echo "$isVlanIf"
+    [ $DEBUG = true ] && echo "    Vlan check, isVlanIf=$isVlanIf"
+
+    # set up vlan interface
+    [ $isVlanIf = true ] && create_vlan_interface $subInterface
+  }
+  return
+}
+
 commons_library()
 {
-  [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+  isProperVid=false
+  isNestedVlan=false
+  sVid=0
+  cVid=0
+  vid=0
+
+  [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
   compose_up()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     case $1 in
       aaa)
         sudo docker-compose -p radius -f compose.yaml up -d
@@ -408,7 +432,7 @@ commons_library()
     
   compose_down()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     case $1 in
       aaa)
         sudo docker-compose -p radius -f compose.yaml down
@@ -424,39 +448,130 @@ commons_library()
         ;;
     esac
   }
+
+  check_vid_format()
+  {
+    # hand over vid candidate, sets
+    # 'isProperVid' to true or false
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
+  
+    # check on numeric value
+    vid_candidate=$1
+    regex='^[0-9]+$'
+    ! [[ $vid_candidate =~ $regex ]] && { echo "VLAN ID includes non numeric chars, exiting."; exit ; }
+    # number range 1-4094
+    ! [ $vid_candidate -gt 0 ] && { echo "Wrong VLAN ID \"$vid_candidate\" (allowed values 1-4094), exiting"; exit ; }
+    ! [ $vid_candidate -lt 4095 ] && { echo "Wrong VLAN ID \"$vid_candidate\" (allowed values 1-4094), exiting"; exit ; }
+  
+    isProperVid=true
+    [ $DEBUG = true ] && echo "  Is proper VLAN ID format: $vid_candidate, isProperVid: $isProperVid";\
+    #vid=vid_candidate
+  }
+
+  check_vlan()
+  {
+    # checks for nested vlan (QinQ) based on interface name (e.g. eth0.100.200)
+    # sets sVid and pVid (in case of nested) or vid (in case of single vlan)
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
+
+    vlanInterface=$1
+    # check rough format (eth0.100 or eth0.100.200)
+    [ $(echo $vlanInterface | sed 's/\./ /g' | wc -w) -lt 2 ] &&\
+      { echo "Wrong VLAN interface format: $vlanInterface, exiting" ; exit; }
+    [ $(echo $vlanInterface | sed 's/\./ /g' | wc -w) -gt 3 ] &&\
+      { echo "Wrong VLAN interface format: $vlanInterface, exiting" ; exit; }
+
+    [ $DEBUG = true ] && echo "  VLAN Interface format OK: $vlanInterface"
+
+    ifId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $1 }')
+
+    [ $(echo $vlanInterface | sed 's/\./ /g' | wc -w) -eq 3 ] && { isNestedVlan=true; } || isNestedVlan=false
+
+    [ $isNestedVlan = true ] && { \
+       sVid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $2 }');\
+       check_vid_format $sVid;\
+       cVid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $3 }');\
+       check_vid_format $cVid;\
+       [ $DEBUG = true ] && echo "  Nested VLAN: svid $sVid  cvid $cVid";\
+     }
+
+    [ $isNestedVlan = false ] && { \
+       vid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $2 }');\
+       [ $DEBUG = true ] && echo "  802.1Q VLAN: vid $vid";\
+       check_vid_format $vid;\
+     }
+  }
+
   create_vlan_interface()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
     vlanInterface=$1
-    ifId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $1 }')
-    vlanId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $2 }')
-    
-    sudo ip link add link $ifId address $laMac name $vlanInterface type vlan id $vlanId 
 
-    if [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -lt 1 ]; then
-      echo "create_vlan_interface: Failed creating vlan interface $vlanInterface, exiting"
-      exit
-    else
-      sudo ip link set dev $ifId up
-      sudo ip link set dev $vlanInterface up
-    fi
+    # sets sVid/cVid or vid, isNetedVlan and ifId
+    check_vlan $vlanInterface
+
+    [ $DEBUG = true ] && echo "  VLAN check OK, isNestedVlan: $isNestedVlan"
+
+    [ $isNestedVlan = false ] && { \
+      vid_to_lamac $vid
+      [ $DEBUG = true ] && echo "  802.1Q VLAN (isNestedVlan=$isNestedVlan)";\
+      [ $DEBUG = true ] && echo "    Creating link";\
+      [ $DEBUG = true ] && echo "    ifId: $ifId, laMac: $laMac, vlanInterface: $vlanInterface, vid: $vid";\
+      sudo ip link add link $ifId address $laMac name $vlanInterface type vlan id $vid;\
+      [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -lt 1 ] && { \
+        echo "create_vlan_interface: Failed creating vlan interface $vlanInterface, exiting";\
+        exit;\
+      } || { \
+        sudo ip link set dev $ifId up;\
+        sudo ip link set dev $vlanInterface up;\
+      };\
+    }
+    
+    [ $isNestedVlan = true ] && { \
+      vid_to_lamac $sVid;\
+      sLaMac=$laMac;\
+      vid_to_lamac $cVid;\
+      cLaMac=$laMac;\
+      [ $DEBUG = true ] && echo "  QinQ VLAN (isNestedVlan=$isNestedVlan)";\
+      [ $DEBUG = true ] && echo "    Creating link";\
+      [ $DEBUG = true ] && echo "    ifId: $ifId, sLaMac: $sLaMac, cLaMac: $cLaMac, vlanInterface: $vlanInterface, vid: $sVid.$cVid";\
+      # create svlan interface
+      ! [ $(ip link show | grep "$ifId.$sVid" | wc -l) -gt 0 ] && { \
+        [ $DEBUG = true ] && echo "  Creating interface $ifId.$svid";\
+        sudo ip link add link $ifId address $sLaMac name $ifId.$sVid type vlan id $sVid;\
+        sudo ip link set dev $ifId.$sVid up;\
+        ! [ $(ip link show | grep "$ifId.$sVid" | wc -l) -gt 0 ] && { echo "Failed creating interface $ifId.$sVid, exiting"; exit; };\
+      }
+      # create cvlan interface
+      ! [ $(ip link show | grep "$ifId.$sVid.$cVid" | wc -l) -gt 0 ] && { \
+        [ $DEBUG = true ] && echo "  Creating interface $ifId.$sVid.$cVid using MAC $cLaMac";\
+        sudo ip link add link $ifId.$sVid address $cLaMac name $ifId.$sVid.$cVid type vlan id $cVid;\
+        sudo ip link set dev $ifId.$sVid.$cVid up;\
+        ! [ $(ip link show | grep "$ifId.$sVid.$cVid" | wc -l) -gt 0 ] && { \
+          echo "Failed creating interface $ifId.$sVid.$cVid, exiting"; exit;\
+        };\
+      };\
+    }
   }
 
   delete_vlan_interface()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     vlanInterface=$1
-    if [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -gt 0 ]; then
-      sudo ip link delete $vlanInterface
-      if [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -gt 0 ]; then
-        echo "delete_vlan_interface: Failed deleting interface $vlanInterface"
-      fi
-    fi
+
+    # sets sVid/cVid or vid, isNetedVlan and ifId
+    check_vlan $vlanInterface
+
+    [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -gt 0 ] && {\
+      sudo ip link delete $vlanInterface;\
+      [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -gt 0 ] && \
+        echo "  Failed deleting interface $vlanInterface";\
+    }
   }
 
   ipv4_to_lamac()
   {
-    [ $DEBUG = "TRUE" ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     ipv4Addr=$1
   
     oct1=$(echo $ipv4Addr | sed -e 's/\./ /g' | awk '{ print $1 }')
@@ -472,6 +587,26 @@ commons_library()
     laMac="02:00:$mac1:$mac2:$mac3:$mac4"
   }
 
+  vid_to_lamac()
+  {
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
+
+    lamVid=$1
+    vidLen=$(echo -n "$lamVid" | wc -c)
+    randOctets=$(date +"%N" | cut -b 4-9 | sed -e 's/\(..\)\(..\)\(..\)$/\1:\2:\3/')
+  
+    [ $vidLen -gt 2 ] && {\
+      o5=$(echo "$lamVid" | sed -e 's/\(..\)$/ \1/' | awk '{ print $1 }');\
+      o6=$(echo "$lamVid" | sed -e 's/\(..\)$/ \1/' | awk '{ print $2 }');\
+    }
+
+    [ $vidLen = 1 ] && laMac="02:$randOctets:00:0$lamVid"
+    [ $vidLen = 2 ] && laMac="02:$randOctets:00:$lamVid"
+    [ $vidLen = 3 ] && laMac="02:$randOctets:0$o5:$o6"
+    [ $vidLen = 4 ] && laMac="02:$randOctets:$o5:$o6"
+
+    [ $DEBUG = true ] && echo "  VlanId: $lamVid, VIDLength: $vidLen, laMac: $laMac"
+  }
 
   return
 }
@@ -486,6 +621,9 @@ case $SERVICE_LIBRARY in
     ;;
   bgp)
     bgp_library
+    ;;
+  subscriber)
+    subscriber_library
     ;;
   *) 
     echo "unknown service"

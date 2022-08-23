@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SERVICE_LIBRARY="aaa"
-DEBUG="TRUE"
+DEBUG=true
 
 # grab configuration
 AAA_SOURCE=${BASH_SOURCE[0]}

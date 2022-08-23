@@ -1,0 +1,7 @@
+# extract mbps
+a=$(cat tmp.txt |grep  -e "Download rate" | cut -d ':' -f2 |sed -e 's/Mbps//' | sed -e 's/.//')
+echo $a
+1152.47
+# convert to bit per sec
+echo $(echo $a 1000000 1 | awk '{printf "%d\n",$1*$2/$3}')      
+1152470000

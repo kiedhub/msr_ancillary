@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SERVICE_LIBRARY="bgp"
-#DEBUG="TRUE"
+#DEBUG=true
 
 # grab configuration
 BGP_SOURCE=${BASH_SOURCE[0]}

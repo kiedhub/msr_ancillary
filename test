@@ -41,4 +41,64 @@ create_array()
   #done
 }
 
+isProperVid=false
+
+check_vid_format()
+{
+  # hand over vid candidate and set variable 'isProperVid' 0=false, 1=true)
+  # and vid
+
+  # check on numeric value
+  vid_candidate=$1
+  regex='^[0-9]+$'
+  ! [[ $vid_candidate =~ $regex ]] && { echo "VLAN ID includes non numeric chars, exiting."; exit ; }
+  # number range 1-4094
+  ! [ $vid_candidate -gt 0 ] && { echo "Wrong VLAN ID \"$vid_candidate\" (allowed values 1-4094), exiting"; exit ; }
+  ! [ $vid_candidate -lt 4095 ] && { echo "Wrong VLAN ID \"$vid_candidate\" (allowed values 1-4094), exiting"; exit ; }
+  [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
+
+  isProperVid=true
+  vid=vid_candidate
+}
+
+create_vlan_if()
+{
+  vlanInterface=$1
+
+  [ $(echo $vlanInterface | sed 's/\./ /g' | wc -w) -eq 3 ] && { isNestedVlan=1; } || isNestedVlan=0
+
+  [ $isNestedVlan -eq 1 ] && { \
+    sVid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $2 }');\
+    cVid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $3 }');\
+    echo "$isNestedVlan ; $sVid ; $cVid";\
+    [ $sVid -gt 4095 ] && echo "invalid svlan id"
+  }
+ 
+}
+
+vid_to_lamac()
+{
+  lamVid=$1
+  macLen=$(echo -n "$lamVid" | wc -c)
+  echo "macLength=$macLen"
+  randOctets=$(date +"%N" | cut -b 4-9 | sed -e 's/\(..\)\(..\)\(..\)$/\1:\2:\3/')
+
+  [ $macLen -gt 2 ] && {\
+    o5=$(echo "$lamVid" | sed -e 's/\(..\)$/ \1/' | awk '{ print $1 }');\
+    o6=$(echo "$lamVid" | sed -e 's/\(..\)$/ \1/' | awk '{ print $2 }');\
+    echo "octet 5=$o5, octet 6=$o6";\
+  }
+  [ $macLen = 1 ] && laMac="02:$randOctets:00:0$lamVid"
+  [ $macLen = 2 ] && laMac="02:$randOctets:00:$lamVid"
+  [ $macLen = 3 ] && laMac="02:$randOctets:0$o5:$o6"
+  [ $macLen = 4 ] && laMac="02:$randOctets:$o5:$o6"
+}
+
 #create_array
+#create_vlan_if $1
+#DEBUG=true
+#check_vid_format $1
+vid=$1
+vid_to_lamac $vid
+echo "laMac=$laMac"
+echo "Continue ..."
