@@ -19,7 +19,7 @@ cd $SUB_SCRIPT_DIR
 SET_DNS=false
 
 #create_vlan_interface $subInterface
-setup_subscriber 
+create_subscriber 
 
 ########################
 # put everything into a separate ip namespace
@@ -31,7 +31,7 @@ ip link set $subInterface netns $subName
 # request ip address and run test
 echo "Switch to newly created namespace $subName and request IP address"
 #export PS1="$subName netns#"
-ip netns exec $subName dhclient
+ip netns exec $subName dhclient -v
 
 #echo "Show assigned IP address"
 #echo "ip netns exec $subName ip a show dev $c_vlan_ifname"

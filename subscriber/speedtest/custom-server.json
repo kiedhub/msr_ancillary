@@ -1,8 +1,8 @@
 [
   {
     "id": 1,
-    "name":"EdgeHub Portsmouth Speedtest Backend",
-    "server":"http://100.65.0.11/",
+    "name":"MSR Demo Speedtest Backend",
+    "server":"http://100.80.0.2/",
     "dlURL":"backend/garbage.php",
     "ulURL":"backend/empty.php",
     "pingURL":"backend/empty.php",
