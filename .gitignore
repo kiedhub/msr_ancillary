@@ -1,7 +1,9 @@
 ./ancillary.conf
-./aaa/volumes/log
-./aaa/volumes/log/*
-./aaa/running.conf
-./bgp/running.conf
-./speedtest/running.conf
-
+#
+#/ancillary.conf
+aaa/volumes/log
+aaa/volumes/log/*
+#aaa/running.conf
+#bgp/running.conf
+#speedtest/running.conf
+#
