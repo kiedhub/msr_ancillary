@@ -8,9 +8,6 @@ DEBUG=true
 SUB_SOURCE=${BASH_SOURCE[0]}
 SUB_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-#SUB_CUSTOM_DIR="$SUB_SCRIPT_DIR/volumes/customize"
-#SUB_TESTRUN_DIR="$SUB_SCRIPT_DIR/volumes/customize/subscriber_client/testing"
-
 . $SUB_SCRIPT_DIR/../functions.sh
 
 cd $SUB_SCRIPT_DIR
@@ -22,20 +19,19 @@ cd $SUB_SCRIPT_DIR
 SET_DNS=false
 
 #create_vlan_interface $subInterface
-create_subscriber 
-#exit
+setup_subscriber 
+
 ########################
 # put everything into a separate ip namespace
 echo "Creating a new ip network namespace: $subName"
-sudo ip netns add $subName
+ip netns add $subName
 echo "Transferring subscriber interface $subInterface to network namespace $subName"
-sudo ip link set $subInterface netns $subName
+ip link set $subInterface netns $subName
 
 # request ip address and run test
 echo "Switch to newly created namespace $subName and request IP address"
 #export PS1="$subName netns#"
-#sudo ip netns exec $subName dhclient
-sudo ip netns exec $subName bash
+ip netns exec $subName dhclient
 
 #echo "Show assigned IP address"
 #echo "ip netns exec $subName ip a show dev $c_vlan_ifname"
@@ -44,16 +40,17 @@ sudo ip netns exec $subName bash
 #echo "$(ip netns exec $subName ip route)"
 #echo ""
 
+# setting DNS server through: /run/systemd/resolve/resolv.conf ?
 if [ $SET_DNS = true ]; then
   echo "Setting Nameserver due to bug in dhclient"
-  sudo ip netns exec $subName echo "nameserver $(resolvectl | grep 'DNS Servers' | awk '{ print $3 }')" 2> /dev/null > /etc/resolv.conf
+  ip netns exec $subName echo "nameserver $(resolvectl | grep 'DNS Servers' | awk '{ print $3 }')" 2> /dev/null > /etc/resolv.conf
 fi
 
 echo "Entering network namespace $subName"
 echo "Exit via 'exit' and './disconnect.sh'"
 echo ""
 
-sudo ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
+ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
 exit
 
 ##############################################################################
