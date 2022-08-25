@@ -16,10 +16,19 @@ SUB_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pw
 
 cd $SUB_SCRIPT_DIR
 
-sub_cvlan="ens8.100.200"
-sub_svlan="ens8.100"
-delete_vlan_interface $sub_cvlan
-delete_vlan_interface $sub_svlan
+#sub_cvlan="ens8.100.200"
+#sub_svlan="ens8.100"
+#delete_vlan_interface $sub_cvlan
+#delete_vlan_interface $sub_svlan
+
+sudo ip netns exec $subName dhclient -r
+#sudo echo "nameserver 8.8.8.8" > /etc/resolv.conf
+
+sudo ip netns exec $subName ip link del dev $subInterface
+
+sudo ip netns del $subName
+
+remove_subscriber
 
 exit
 

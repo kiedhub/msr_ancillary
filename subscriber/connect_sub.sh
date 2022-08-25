@@ -19,22 +19,23 @@ cd $SUB_SCRIPT_DIR
 #subSvlan="100"
 #subCvlan="200"
 #subAccessProto="ipoe"
-SET_DNS=true
+SET_DNS=false
 
 #create_vlan_interface $subInterface
-setup_subscriber 
-exit
+create_subscriber 
+#exit
 ########################
 # put everything into a separate ip namespace
 echo "Creating a new ip network namespace: $subName"
-ip netns add $subName
+sudo ip netns add $subName
 echo "Transferring subscriber interface $subInterface to network namespace $subName"
-ip link set $subInterface netns $subName
+sudo ip link set $subInterface netns $subName
 
 # request ip address and run test
 echo "Switch to newly created namespace $subName and request IP address"
 #export PS1="$subName netns#"
-ip netns exec $subName dhclient
+#sudo ip netns exec $subName dhclient
+sudo ip netns exec $subName bash
 
 #echo "Show assigned IP address"
 #echo "ip netns exec $subName ip a show dev $c_vlan_ifname"
@@ -45,14 +46,14 @@ ip netns exec $subName dhclient
 
 if [ $SET_DNS = true ]; then
   echo "Setting Nameserver due to bug in dhclient"
-  ip netns exec $subName echo "nameserver $(resolvectl | grep 'DNS Servers' | awk '{ print $3 }')" 2> /dev/null > /etc/resolv.conf
+  sudo ip netns exec $subName echo "nameserver $(resolvectl | grep 'DNS Servers' | awk '{ print $3 }')" 2> /dev/null > /etc/resolv.conf
 fi
 
 echo "Entering network namespace $subName"
 echo "Exit via 'exit' and './disconnect.sh'"
 echo ""
 
-ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
+sudo ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
 exit
 
 ##############################################################################

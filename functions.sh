@@ -389,17 +389,33 @@ bgp_library()
 subscriber_library()
 {
   [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
-  setup_subscriber()
+
+  create_subscriber()
   {
     [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     # check if vlan or qinq
-    [ $(echo $subInterface | grep "\." | wc -l) -gt 0 ] && isVlanIf=true || isVlanIf=false ; echo "$isVlanIf"
+    [ $(echo $subInterface | grep "\." | wc -l) -gt 0 ] && isVlanIf=true || isVlanIf=false 
     [ $DEBUG = true ] && echo "    Vlan check, isVlanIf=$isVlanIf"
 
     # set up vlan interface
     [ $isVlanIf = true ] && create_vlan_interface $subInterface
+    
+    # make sure parent if is up
+    [ $isVlanIf = false ] && { \
+      sudo ip link set dev $subInterface up;\
+      [ $DEBUG = true ] && echo "  Bringin up interface $subInterface";\
+    }
   }
-  return
+
+  remove_subscriber()
+  {
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
+    [ $(echo $subInterface | grep "\." | wc -l) -gt 0 ] && isVlanIf=true || isVlanIf=false
+    [ $DEBUG = true ] && echo "    Vlan check, isVlanIf=$isVlanIf"
+
+    # set up vlan interface
+    [ $isVlanIf = true ] && delete_vlan_interface $subInterface
+  }
 }
 
 commons_library()
@@ -522,6 +538,7 @@ commons_library()
         echo "create_vlan_interface: Failed creating vlan interface $vlanInterface, exiting";\
         exit;\
       } || { \
+        [ $DEBUG = true ] && echo "  Brining up interfaces $ifId and $vlanInterface";\
         sudo ip link set dev $ifId up;\
         sudo ip link set dev $vlanInterface up;\
       };\
