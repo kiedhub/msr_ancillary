@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-#!/usr/bin/env bash
-
 SERVICE_LIBRARY="aaa"
 
 # grab configuration

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+  
+SERVICE_LIBRARY="tacplus"
+DEBUG=true
+
+# grab configuration
+TACP_SOURCE=${BASH_SOURCE[0]}
+TACP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#TACP_CUSTOM_DIR="$TACP_SCRIPT_DIR/volumes/customize"
+. $TACP_SCRIPT_DIR/../functions.sh
+
+cd $TACP_SCRIPT_DIR
+
+composeSampleFile="$TACP_SCRIPT_DIR/compose_sample.yaml"
+composeDestFile="$TACP_SCRIPT_DIR/compose.yaml"
+authTemplFile="$TACP_CUSTOM_DIR/authorize_template"
+authDestFile="$TACP_CUSTOM_DIR/authorize"
+clientsTemplFile="$TACP_CUSTOM_DIR/clients_template.conf"
+clientsDestFile="$TACP_CUSTOM_DIR/clients.conf"
+
+testrunTemplFile="$TACP_TESTRUN_DIR/testrun_templ"
+testrunDestFile="$TACP_TESTRUN_DIR/testrun"
+
+bridgeInterface="$tacPlusInterface.$tacPlusInterfaceVlan"
+bridgeName="$tacPlusBridgeName"
+
+#echo "Src $composeSampleFile Dst $composeDestFile"
+
+build_compose_file
+wr_running_config $TACP_SCRIPT_DIR
+compose_up $SERVICE_LIBRARY 
+bridge_interface attach $bridgeInterface $bridgeName
+exit
+tacPlusBridgeName="tac_plus"
+tacPlusInterface="ens8"
+tacPlusInterfaceVlan="2895"
+#rm_running_config $TACP_SCRIPT_DIR
