@@ -416,7 +416,7 @@ subscriber_library()
     [ $(echo $subInterface | grep "\." | wc -l) -gt 0 ] && isVlanIf=true || isVlanIf=false
     [ $DEBUG = true ] && echo "    Vlan check, isVlanIf=$isVlanIf"
 
-    # set up vlan interface
+    # delete vlan interface
     [ $isVlanIf = true ] && delete_vlan_interface $subInterface
   }
 }
