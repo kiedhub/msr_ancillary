@@ -2,7 +2,7 @@
 testing Cleartext-Password := "password"
 
 DEFAULT Auth-Type := Accept
-        Casa-Vrf-Name := "dh_access"
+        Casa-Vrf-Name := "test_access"
 
 
 #

@@ -183,18 +183,20 @@ commons_library()
     [ $(echo $vlanInterface | sed 's/\./ /g' | wc -w) -eq 2 ] && { vlanOfType="single"; } 
     [ $(echo $vlanInterface | sed 's/\./ /g' | wc -w) -eq 3 ] && { vlanOfType="double"; } 
 
+    [ $DEBUG = true ] && echo "  Vlan tag format: $vlanOfType"
+
     [ $vlanOfType = "double" ] && { \
       sVid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $2 }');\
       check_vid_format $sVid;\
       cVid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $3 }');\
       check_vid_format $cVid;\
       isVlanIf=true;\
-      [ $DEBUG = true ] && echo "  Nested VLAN: svid $sVid  cvid $cVid";\
+      [ $DEBUG = true ] && echo "  Is nested VLAN (double tagged): svid $sVid  cvid $cVid";\
     }
 
     [ $vlanOfType = "single" ] && { \
       vid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $2 }');\
-      [ $DEBUG = true ] && echo "  802.1Q VLAN: vid $vid";\
+      [ $DEBUG = true ] && echo "  Is 802.1Q VLAN (single tagged): vid $vid";\
       check_vid_format $vid;\
       isVlanIf=true;\
     }
@@ -208,6 +210,7 @@ commons_library()
   {
     [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
     vlanInterface=$1
+    [ $DEBUG = true ] && echo "  vlanInterface: $vlanInterface"
 
     # sets sVid/cVid or vid, isNetedVlan and ifId
     check_vlan $vlanInterface
@@ -220,7 +223,7 @@ commons_library()
 
     [ $DEBUG = true ] && echo "  VLAN check OK, isNestedVlan: $isNestedVlan"
 
-    [ $isNestedVlan = false ] && { \
+    [ $vlanOfTyp = "single" ] && { \
       vid_to_lamac $vid
       [ $DEBUG = true ] && echo "  802.1Q VLAN (isNestedVlan=$isNestedVlan)";\
       sudo ip link add link $ifId address $laMac name $vlanInterface type vlan id $vid;\
@@ -234,14 +237,15 @@ commons_library()
       };\
     }
     
-    [ $isNestedVlan = true ] && { \
+    [ $vlanOfType = "double" ] && { \
       vid_to_lamac $sVid;\
       sLaMac=$laMac;\
       vid_to_lamac $cVid;\
       cLaMac=$laMac;\
-      [ $DEBUG = true ] && echo "  QinQ VLAN (isNestedVlan=$isNestedVlan)";\
+      [ $DEBUG = true ] && echo "  QinQ VLAN (double tagged)";\
       [ $DEBUG = true ] && echo "    Creating link";\
       [ $DEBUG = true ] && echo "    ifId: $ifId, sLaMac: $sLaMac, cLaMac: $cLaMac, vlanInterface: $vlanInterface, vid: $sVid.$cVid";\
+
       # create svlan interface
       ! [ $(ip link show | grep "$ifId.$sVid" | wc -l) -gt 0 ] && { \
         [ $DEBUG = true ] && echo "  Creating interface $ifId.$svid";\
