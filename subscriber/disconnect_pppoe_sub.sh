@@ -21,12 +21,12 @@ cd $SUB_SCRIPT_DIR
 
 poff dsl-provider100
 
-delete_vlan_interface $sub2Interface
+#delete_vlan_interface $sub2Interface
 
 
 
 
-exit
+#exit
 
 #sub_cvlan="ens7.100.1024"
 #sub_svlan="ens7.100"
@@ -38,14 +38,16 @@ exit
 # disconnect sub and 
 # reset back to original 
 # release ip address, reset dns server and delete ip link and namespace
-ip netns exec $subName dhclient -r
+ip netns exec $sub2Name dhclient -r
 #echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
-ip netns exec $subName ip link del dev $c_vlan_ifname
+ip netns exec $sub2Name ip link del dev $sub2Interface
 
-ip netns del $subName
+ip netns del $sub2Name
 
+delete_vlan_interface $sub2Interface
 ##########################################################################
+exit
 
 remove_subscriber
 

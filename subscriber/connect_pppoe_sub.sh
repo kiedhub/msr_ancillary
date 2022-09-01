@@ -22,36 +22,28 @@ subPty="pty \"\/usr\/sbin\/pppoe -I $sub2Interface -T 80 -m 1452\""
 
 sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" > /etc/ppp/peers/dsl-provider100
 
-#| sed '/^#.*$/d' | sed '/^$/d'
-
 #[ $DEBUG = true ] && sudo cat /etc/ppp/peers/dsl-provider100
 
-sudo pon dsl-provider100
+#sudo pon dsl-provider100
 
+#exit
 
-
-exit
-
-#subInterface="ens9"
-#subSvlan="100"
-#subCvlan="200"
-#subAccessProto="ipoe"
 SET_DNS=false
 
-#create_vlan_interface $subInterface
-create_subscriber 
-
+#create_subscriber 
 ########################
 # put everything into a separate ip namespace
-echo "Creating a new ip network namespace: $subName"
-ip netns add $subName
-echo "Transferring subscriber interface $subInterface to network namespace $subName"
-ip link set $subInterface netns $subName
+echo "Creating a new ip network namespace: $sub2Name"
+ip netns add $sub2Name
+echo "Transferring subscriber interface $subInterface to network namespace $sub2Name"
+ip link set $sub2Interface netns $sub2Name
 
 # request ip address and run test
-echo "Switch to newly created namespace $subName and request IP address"
-#export PS1="$subName netns#"
-ip netns exec $subName dhclient -v
+echo "Switch to newly created namespace $sub2Name and request IP address"
+#export PS1="$sub2Name netns#"
+
+ip netns exec $sub2Name pon dsl-provider100 
+sleep 5
 
 #echo "Show assigned IP address"
 #echo "ip netns exec $subName ip a show dev $c_vlan_ifname"
@@ -63,14 +55,16 @@ ip netns exec $subName dhclient -v
 # setting DNS server through: /run/systemd/resolve/resolv.conf ?
 if [ $SET_DNS = true ]; then
   echo "Setting Nameserver due to bug in dhclient"
-  ip netns exec $subName echo "nameserver $(resolvectl | grep 'DNS Servers' | awk '{ print $3 }')" 2> /dev/null > /etc/resolv.conf
+  ip netns exec $sub2Name echo "nameserver $(resolvectl | grep 'DNS Servers' | awk '{ print $3 }')" 2> /dev/null > /etc/resolv.conf
 fi
 
-echo "Entering network namespace $subName"
+echo "Entering network namespace $sub2Name"
 echo "Exit via 'exit' and './disconnect.sh'"
+echo "pppoe connectivity may require a couple of seconds."
 echo ""
 
-ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
+ip netns exec $sub2Name bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
+
 exit
 
 ##############################################################################

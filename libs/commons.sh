@@ -223,7 +223,7 @@ commons_library()
 
     [ $DEBUG = true ] && echo "  VLAN check OK, isNestedVlan: $isNestedVlan"
 
-    [ $vlanOfTyp = "single" ] && { \
+    [ $vlanOfType = "single" ] && { \
       vid_to_lamac $vid
       [ $DEBUG = true ] && echo "  802.1Q VLAN (isNestedVlan=$isNestedVlan)";\
       sudo ip link add link $ifId address $laMac name $vlanInterface type vlan id $vid;\

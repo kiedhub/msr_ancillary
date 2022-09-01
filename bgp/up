@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SERVICE_LIBRARY="bgp"
-#DEBUG=true
+DEBUG=true
 
 # grab configuration
 BGP_SOURCE=${BASH_SOURCE[0]}
@@ -18,3 +18,29 @@ build_compose_file
 compose_up $SERVICE_LIBRARY 
 attach_bridge_interface
 write_running_config
+
+# some routes for static testing
+# should not be issued when testing bgp
+get_container_id()
+{
+  routerId=$1
+
+  contId=$(sudo docker ps |grep $routerId | awk '{ print $1 }')
+
+#  echo "sudo docker exec -it $contId sh -c 'ip route add $destIp via $gateway'"
+#  sudo docker exec -it $contId sh -c "'ip route add $destIp via $gateway'"
+#  sudo docker exec -it $contId sh -c 'ip route '
+}
+
+get_container_id isp1
+sudo docker exec -it $contId sh -c 'ip route add 100.70.0.0/16 via 192.168.1.20'
+sudo docker exec -it $contId sh -c 'ip route add 100.80.0.0/16 via 192.168.1.20'
+sudo docker exec -it $contId sh -c 'ip route'
+
+get_container_id isp2
+sudo docker exec -it $contId sh -c 'ip route add 100.70.0.0/16 via 192.168.2.20'
+sudo docker exec -it $contId sh -c 'ip route add 100.80.0.0/16 via 192.168.2.20'
+sudo docker exec -it $contId sh -c 'ip route'
+
+
+
