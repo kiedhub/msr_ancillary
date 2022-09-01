@@ -30,8 +30,8 @@ build_compose_file
 wr_running_config $TACP_SCRIPT_DIR
 compose_up $SERVICE_LIBRARY 
 bridge_interface attach $bridgeInterface $bridgeName
-exit
-tacPlusBridgeName="tac_plus"
-tacPlusInterface="ens8"
-tacPlusInterfaceVlan="2895"
+#exit
+#tacPlusBridgeName="tac_plus"
+#tacPlusInterface="ens8"
+#tacPlusInterfaceVlan="2895"
 #rm_running_config $TACP_SCRIPT_DIR
