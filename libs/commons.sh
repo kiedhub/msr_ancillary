@@ -12,6 +12,36 @@ commons_library()
 
   [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
 
+  if_up()
+  {
+    # checks interface status and bring it up in cas it is down
+    # requires interface name
+    
+    [ -z $1 ] && ifUpId=" NO IF ID" || ifUpId=$1
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} ($ifUpId)"
+
+    [ $(ip link show $ifUpId | grep "DOWN" | wc -l) -gt 0 ] && { \
+      echo "  Interface $ifUpId down, bringing it up ..."; \
+      sudo ip link set dev $ifUpId up; \
+    } 
+  }
+
+  ip_add()
+  {
+    # adds an ip address to an interface
+    # requires ip-addr/prefix
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} ($1, $2)"
+     
+    ipAddr=$1
+    ipAddIfId=$2
+    
+    check_vlan $ipAddIfId
+
+    [ $DEBUG = true ] && echo "  Adding IP address $ipAddr to $ipAddIfId"
+    sudo ip addr add $ipAddr dev $ipAddIfId
+
+  }
+
   check_bridge()
   {
     # requires interface and bridgeName 
@@ -145,12 +175,12 @@ commons_library()
   {
     # hand over vid candidate, sets
     # 'isProperVid' to true or false
-    [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} ($1)"
   
     # check on numeric value
     vid_candidate=$1
     regex='^[0-9]+$'
-    ! [[ $vid_candidate =~ $regex ]] && { echo "VLAN ID includes non numeric chars, exiting."; exit ; }
+    ! [[ $vid_candidate =~ $regex ]] && { echo "VLAN ID ($vid_candidate) includes non numeric chars, exiting."; exit ; }
     # number range 1-4094
     ! [ $vid_candidate -gt 0 ] && { echo "Wrong VLAN ID \"$vid_candidate\" (allowed values 1-4094), exiting"; exit ; }
     ! [ $vid_candidate -lt 4095 ] && { echo "Wrong VLAN ID \"$vid_candidate\" (allowed values 1-4094), exiting"; exit ; }
@@ -177,6 +207,7 @@ commons_library()
     [ $DEBUG = true ] && echo "  VLAN Interface format OK: $vlanInterface"
     
     ifId=$(echo $vlanInterface | sed -e 's/\./ /' | awk '{ print $1 }')
+    [ $DEBUG = true ] && echo "  ifId: $ifId"
 
     # check vlan type
     [ $(echo $vlanInterface | sed 's/\./ /g' | wc -w) -eq 1 ] && { vlanOfType="none"; } 
@@ -196,7 +227,7 @@ commons_library()
 
     [ $vlanOfType = "single" ] && { \
       vid=$(echo $vlanInterface | sed 's/\./ /g' | awk '{ print $2 }');\
-      [ $DEBUG = true ] && echo "  Is 802.1Q VLAN (single tagged): vid $vid";\
+      [ $DEBUG = true ] && echo "  Is 802.1Q VLAN (single tagged): vlanInterface: $vlanInterface vid $vid";\
       check_vid_format $vid;\
       isVlanIf=true;\
     }
@@ -214,6 +245,10 @@ commons_library()
 
     # sets sVid/cVid or vid, isNetedVlan and ifId
     check_vlan $vlanInterface
+
+    # parent interface may be down after reboot, so let's check and bring it up
+    [ $DEBUG = true ] && echo "  Bring up parent if: $ifId"
+    if_up $ifId
     
     [ $isVlanIf = false ] && { echo "No VLAN interface, nothing to do"; return; }
     [ $(sudo ip link show | grep $vlanInterface | wc -l) -gt 0 ] && { \
@@ -232,8 +267,8 @@ commons_library()
         exit;\
       } || { \
         [ $DEBUG = true ] && echo "  Brining up interfaces $ifId and $vlanInterface";\
-        sudo ip link set dev $ifId up;\
-        sudo ip link set dev $vlanInterface up;\
+        if_up $ifId;\
+        if_up $vlanInterface;\
       };\
     }
     
@@ -250,14 +285,14 @@ commons_library()
       ! [ $(ip link show | grep "$ifId.$sVid" | wc -l) -gt 0 ] && { \
         [ $DEBUG = true ] && echo "  Creating interface $ifId.$svid";\
         sudo ip link add link $ifId address $sLaMac name $ifId.$sVid type vlan id $sVid;\
-        sudo ip link set dev $ifId.$sVid up;\
+        if_up $ifId.$sVid;\
         ! [ $(ip link show | grep "$ifId.$sVid" | wc -l) -gt 0 ] && { echo "Failed creating interface $ifId.$sVid, exiting"; exit; };\
       }
       # create cvlan interface
       ! [ $(ip link show | grep "$ifId.$sVid.$cVid" | wc -l) -gt 0 ] && { \
         [ $DEBUG = true ] && echo "  Creating interface $ifId.$sVid.$cVid using MAC $cLaMac";\
         sudo ip link add link $ifId.$sVid address $cLaMac name $ifId.$sVid.$cVid type vlan id $cVid;\
-        sudo ip link set dev $ifId.$sVid.$cVid up;\
+        if_up $ifId.$sVid.$cVid;\
         ! [ $(ip link show | grep "$ifId.$sVid.$cVid" | wc -l) -gt 0 ] && { \
           echo "Failed creating interface $ifId.$sVid.$cVid, exiting"; exit;\
         };\
