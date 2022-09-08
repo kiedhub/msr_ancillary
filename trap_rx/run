@@ -17,8 +17,15 @@ cd $SNMP_SCRIPT_DIR
 create_vlan_interface $snmpInterface
 ip_add $snmpIpAddress $snmpInterface
 
+echo ""
+echo "**** START TESTING ****"
+echo ""
+snmp_walk $snmpServerIp $snmpTestIfIndex $snmpV3User
+
+echo ""
 echo "Start listening for snmp traps ..."
 sudo tcpdump -vvi $snmpInterface port 162
+#sudo tcpdump -vvi $snmpInterface 
 
 delete_vlan_interface $snmpInterface
 

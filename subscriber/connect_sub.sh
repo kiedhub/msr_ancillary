@@ -31,7 +31,8 @@ ip link set $subInterface netns $subName
 # request ip address and run test
 echo "Switch to newly created namespace $subName and request IP address"
 #export PS1="$subName netns#"
-ip netns exec $subName dhclient -v
+#ip netns exec $subName dhclient -v
+ip netns exec $subName dhclient -6 -v
 
 #echo "Show assigned IP address"
 #echo "ip netns exec $subName ip a show dev $c_vlan_ifname"

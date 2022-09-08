@@ -381,5 +381,79 @@ commons_library()
     # make it read-only
     sudo chmod 444 $scriptDir/running.conf
   }
+  
+  snmp_walk()
+  {
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} (IP: $1, IfId: $2)"
+
+    ipAddr=$1
+    ifId=$2
+    ifIndex="100000$ifId"
+    v3User="$3"
+
+    echo "*** SNMPv2c testing ***"
+    sleep 2
+    echo ""
+    echo "snmpwalk -v 2c -c public $ipAddr iso.3.6.1.2.1.1.1"
+    snmpwalk -v 2c -c public $ipAddr iso.3.6.1.2.1.1.1
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.2.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.2.$ifIndex
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.6.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.6.$ifIndex
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.8.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.8.$ifIndex
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.31.1.1.1.10.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.31.1.1.1.10.$ifIndex
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.31.1.1.1.6.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.31.1.1.1.6.$ifIndex
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.14.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.2.2.1.14.$ifIndex
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.47.1.1.1.1.7.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.47.1.1.1.1.7.$ifIndex
+    echo ""
+    echo "snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.31.1.1.1.18.$ifIndex"
+    snmpget -v 2c -c public $ipAddr 1.3.6.1.2.1.31.1.1.1.18.$ifIndex
+    echo ""
+    echo ""
+
+    echo "*** SNMPv3 testing ***"
+#    snmpwalk -v 3 -l noAuthNoPriv -u test31  172.16.3.20 iso.3.6.1.2.1.1.1
+    sleep 2
+    echo ""
+    echo "snmpwalk -v 3 -l noAuthNoPriv -u $v3User $ipAddr iso.3.6.1.2.1.1.1"
+    snmpwalk -v 3 -l noAuthNoPriv -u $v3User $ipAddr iso.3.6.1.2.1.1.1
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.2.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.2.$ifIndex
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.6.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.6.$ifIndex
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.8.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.8.$ifIndex
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.31.1.1.1.10.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.31.1.1.1.10.$ifIndex
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.31.1.1.1.6.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.31.1.1.1.6.$ifIndex
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.14.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.2.2.1.14.$ifIndex
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.47.1.1.1.1.7.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.47.1.1.1.1.7.$ifIndex
+    echo ""
+    echo "snmpget -v 3 -l noAuthNoPriv -u $v3User $ipAddr 1.3.6.1.2.1.31.1.1.1.18.$ifIndex"
+    snmpget -v 3 -l noAuthNoPriv -u test31 $ipAddr 1.3.6.1.2.1.31.1.1.1.18.$ifIndex
+  }
+
 
 }
