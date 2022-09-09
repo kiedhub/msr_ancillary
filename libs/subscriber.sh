@@ -70,6 +70,16 @@ subscriber_library()
 
   }
 
+  subscriber_backup_dhclient_leases()
+  {
+    echo "need to implement saving /var/lib/dhcp/dhclient*"
+  }
+
+  subscriber_restore_dhclient_leases()
+  {
+    echo "need to implement restoring /var/lib/dhcp/dhclient*"
+  }
+
   subscriber_session_create()
   {
     # sets up subscriber interface and connects sub to BNG 
@@ -114,19 +124,21 @@ subscriber_library()
     # subscriber type specific connectivity
     case $sscAp in
       ipoe4)
+        subscriber_backup_dhclient_leases
         ip netns exec $sscSn dhclient -4 -v $sscIf
         ;;
       ipoe6)
+        subscriber_backup_dhclient_leases
         ip netns exec $sscSn dhclient -6 -N -v $sscIf
         #dhclient -6 -N -v $sscIf
         ;;
       ipoe6pd)
+        subscriber_backup_dhclient_leases
         ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
         #dhclient -6 -P -N -v $sscIf
         ;;
       ipoeds)
-        ip netns exec $ssrSn dhclient -4 -r
-        ip netns exec $ssrSn dhclient -6 -r
+        subscriber_backup_dhclient_leases
         ip netns exec $sscSn dhclient -4 -v $sscIf
         ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
         ;;
@@ -204,20 +216,24 @@ subscriber_library()
     case $ssrAp in
       ipoe4)
         ip netns exec $ssrSn dhclient -4 -r
-        sudo rm /var/lib/dhclient.leases
+        subscriber_restore_dhclient_leases
+        #sudo rm /var/lib/dhclient.leases
         ;;
       ipoe6)
         ip netns exec $ssrSn dhclient -6 -r
-        sudo rm /var/lib/dhclient6.leases
+        subscriber_restore_dhclient_leases
+        #sudo rm /var/lib/dhclient6.leases
         ;;
       ipoe6pd)
         ip netns exec $ssrSn dhclient -6 -r
-        sudo rm /var/lib/dhclient6.leases
+        subscriber_restore_dhclient_leases
+        #sudo rm /var/lib/dhclient6.leases
         #dhclient -6 -P -N -v $ssrIf
         ;;
       ipoeds)
         ip netns exec $ssrSn dhclient -4 -r
         ip netns exec $ssrSn dhclient -6 -r
+        #subscriber_restore_dhclient_leases
         sudo rm /var/lib/dhclient.leases
         sudo rm /var/lib/dhclient6.leases
         ;;
