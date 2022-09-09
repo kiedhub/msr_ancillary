@@ -43,7 +43,8 @@ subscriber_library()
     scrFile=$1
 
     sudo chmod +w $scrFile
-    scrBakFile=$(echo $scrFile | sed -e 's/\.cfg/.bak')
+    scrBakFile=$(echo $scrFile | sed -e 's/\.cfg/.bak/')
+    [ $DEBUG = true ] && { echo "  src-file: $scrFile"; echo "  dst-file: $scrBakFile"; }
 
     sudo mv $scrFile $scrBakFile
 
@@ -54,8 +55,7 @@ subscriber_library()
     # writes subscriber configuration data
     # requires: sub-name as $1, interface as $2 and access-proto as $3
 
-    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (SubscriberName: $1, Interface: $2, \
-      Access Protocol: $3)"
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (SubscriberName: $1, Interface: $2, Access Protocol: $3)"
 
     scwSn=$1
     scwIf=$2
@@ -108,19 +108,27 @@ subscriber_library()
 
     # request ip address and run test
     echo "Switch to newly created namespace $sscSn and connect subscriber"
+    
+    subscriber_config_write $sscSn $sscIf $sscAp
 
     # subscriber type specific connectivity
     case $sscAp in
       ipoe4)
-        ip netns exec $sscSn dhclient -v
+        ip netns exec $sscSn dhclient -4 -v $sscIf
         ;;
       ipoe6)
-        dhclient -6 -N -v $sscIf
+        ip netns exec $sscSn dhclient -6 -N -v $sscIf
+        #dhclient -6 -N -v $sscIf
         ;;
       ipoe6pd)
-        dhclient -6 -P -N -v $sscIf
+        ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
+        #dhclient -6 -P -N -v $sscIf
         ;;
       ipoeds)
+        ip netns exec $ssrSn dhclient -4 -r
+        ip netns exec $ssrSn dhclient -6 -r
+        ip netns exec $sscSn dhclient -4 -v $sscIf
+        ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
         ;;
       pppoe4)
         ;;
@@ -138,9 +146,7 @@ subscriber_library()
     echo "Exit via 'exit' and './disconnect.sh'"
     echo ""
 
-    subscriber_config_write $sscSn $sscIf $sscAp
-
-    ip netns exec $sscSn bash --rcfile <(cat ~/.bashrc; echo 'PS1=NS $sscSn > ')
+    ip netns exec $sscSn bash --rcfile <(cat ~/.bashrc; echo 'PS1="Namespace > "')
 
   }
 
@@ -197,15 +203,23 @@ subscriber_library()
     # subscriber type specific disconnect
     case $ssrAp in
       ipoe4)
-        ip netns exec $ssrSn dhclient -r
+        ip netns exec $ssrSn dhclient -4 -r
+        sudo rm /var/lib/dhclient.leases
         ;;
       ipoe6)
-        dhclient -6 -N -v $ssrIf
+        ip netns exec $ssrSn dhclient -6 -r
+        sudo rm /var/lib/dhclient6.leases
         ;;
       ipoe6pd)
-        dhclient -6 -P -N -v $ssrIf
+        ip netns exec $ssrSn dhclient -6 -r
+        sudo rm /var/lib/dhclient6.leases
+        #dhclient -6 -P -N -v $ssrIf
         ;;
       ipoeds)
+        ip netns exec $ssrSn dhclient -4 -r
+        ip netns exec $ssrSn dhclient -6 -r
+        sudo rm /var/lib/dhclient.leases
+        sudo rm /var/lib/dhclient6.leases
         ;;
       pppoe4)
         ;;
