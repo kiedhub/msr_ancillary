@@ -12,14 +12,51 @@ SUB_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pw
 
 cd $SUB_SCRIPT_DIR
 
-#subInterface="ens9"
-#subSvlan="100"
-#subCvlan="200"
-#subAccessProto="ipoe"
 SET_DNS=false
 
+usage()
+{
+  echo "Usage: connect_subscriber.sh [ -i interface ] [ -t connectivity-type ] <subsciber-name>"
+  echo "Missing options will pulled from ancillary.conf"
+  echo "Options"
+  echo " -i  Interface to use (e.g. ens8.100.2048), dotted notation for VLAN configuration." 
+  echo "     The interface must not yet exist and gets created."
+  echo " -t  Connectivity type, please chose one of"
+  echo "     ipoe4   - dhcp IPv4 only"
+  echo "     ipoe6   - dhcp IPv6 only IA_NA"
+  echo "     ipoe6pd - dhcp IPv6 only IA_NA prefix delegation"
+  echo "     ipoeds  - dhcp dual-stack (IPv4 and IPv6 IA_NA)"
+  echo "     pppoe4  - pppoe IPv4 only"
+  echo "     pppoe6  - pppoe IPv6 only (not yet supported)"
+  echo "     pppoeds - pppoe dual-stack"
+}
+
+[ -z $1 ] && { echo "Error: Missing subscriber name"; usage ; exit; } || subName=${@: -1}
+
+# lookup subscriber in ancillary.conf
+get_subconfig $subName
+subInterface=$gsInterface
+subAccessProto=$gsAccessProto
+
+while getopts ":i:t:h:" option; do
+  case $option in
+     i) 
+       subInterface=$OPTARG
+       ! [ -z $subInterface ] && echo "Overwriting interface with $subInterface"
+       ;;
+     t)
+       subAccessProto=$OPTARG
+       ! [ -z $subAccessProto ] && echo "Overwriting access protocol type with $subAccessProto"
+       ;;
+  esac
+done
+
+[ $DEBUG = true ] && echo "Name: $subName, Interface: $subInterface, AccessProto: $subAccessProto"
+
 #create_vlan_interface $subInterface
-create_subscriber 
+subscriber_session_create $subInterface $subName $subAccessProto
+
+exit
 
 ########################
 # put everything into a separate ip namespace
@@ -31,8 +68,8 @@ ip link set $subInterface netns $subName
 # request ip address and run test
 echo "Switch to newly created namespace $subName and request IP address"
 #export PS1="$subName netns#"
-#ip netns exec $subName dhclient -v
-ip netns exec $subName dhclient -6 -v
+ip netns exec $subName dhclient -v
+#ip netns exec $subName dhclient -6 -N -v
 
 #echo "Show assigned IP address"
 #echo "ip netns exec $subName ip a show dev $c_vlan_ifname"

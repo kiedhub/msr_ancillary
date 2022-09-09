@@ -23,40 +23,40 @@ usage()
 
 }
 
-setIPv6option()
-{
-  [ $DEBUG = true ] && echo "${FUNCNAME[0]} (Action: $1)"
-
-  sIPv6action=$1
-
-  ! [ -e /etc/ppp/options ] && { echo "  File /etc/ppp/options does not exist, exiting." ; exit ; }
-
-  [ $(sudo cat /etc/ppp/options | grep "^[ ^I]*+ipv6 ipv6cp-use-ipaddr" | wc -l) -gt 0 ] && \
-    hasIPv6option=true || \
-    hasIPv6option=false
-
-  case $sIPv6action in
-    add)
-      [ $hasIPv6option = false ] && { \
-        [ $DEBUG = true ] && echo "  Adding IPv6 option to /etc/ppp/options"; \
-        sudo echo "+ipv6 ipv6cp-use-ipaddr" >> /etc/ppp/options; \
-      }
-      ;;
-    remove)
-      [ $hasIPv6option = true ] && { \
-      [ $DEBUG = true ] && echo "  Removing IPv6 option from /etc/ppp/options"; \
-        sudo mv /etc/ppp/options /etc/ppp/options.orig; \
-        sudo cat /etc/ppp/options.orig | sed -e 's/+ipv6 ipv6cp-use-ipaddr/#+ipv6 ipv6cp-use-ipaddr/' \
-          > /etc/ppp/options ; \
-        }
-      ;;
-    *)
-      [ $DEBUG = true ] && echo "  Wrong parameter, use remove or add"
-      ;;
-  esac
-
-
-}
+#setIPv6option()
+#{
+#  [ $DEBUG = true ] && echo "${FUNCNAME[0]} (Action: $1)"
+#
+#  sIPv6action=$1
+#
+#  ! [ -e /etc/ppp/options ] && { echo "  File /etc/ppp/options does not exist, exiting." ; exit ; }
+#
+#  [ $(sudo cat /etc/ppp/options | grep "^[ ^I]*+ipv6 ipv6cp-use-ipaddr" | wc -l) -gt 0 ] && \
+#    hasIPv6option=true || \
+#    hasIPv6option=false
+#
+#  case $sIPv6action in
+#    add)
+#      [ $hasIPv6option = false ] && { \
+#        [ $DEBUG = true ] && echo "  Adding IPv6 option to /etc/ppp/options"; \
+#        sudo echo "+ipv6 ipv6cp-use-ipaddr" >> /etc/ppp/options; \
+#      }
+#      ;;
+#    remove)
+#      [ $hasIPv6option = true ] && { \
+#      [ $DEBUG = true ] && echo "  Removing IPv6 option from /etc/ppp/options"; \
+#        sudo mv /etc/ppp/options /etc/ppp/options.orig; \
+#        sudo cat /etc/ppp/options.orig | sed -e 's/+ipv6 ipv6cp-use-ipaddr/#+ipv6 ipv6cp-use-ipaddr/' \
+#          > /etc/ppp/options ; \
+#        }
+#      ;;
+#    *)
+#      [ $DEBUG = true ] && echo "  Wrong parameter, use remove or add"
+#      ;;
+#  esac
+#
+#
+#}
 
 
 [ -z $1 ] && testCase=v4 || testCase=$1
@@ -66,13 +66,15 @@ case $testCase in
     sName=$sub2Name
     sInterface=$sub2Interface
     sAccessProto=$sub2AccessProto
-    setIPv6option remove
+    pppIPv6option remove
+    pppoeType="pppoev4"
     ;;
   ds)
     sName=$sub3Name
     sInterface=$sub3Interface
     sAccessProto=$sub3AccessProto
-    setIPv6option add
+    pppIPv6option add
+    pppoeType="pppoeDs"
     ;;
   *)
     usage
@@ -92,7 +94,9 @@ echo "Parameters: $sName, $sInterface, $sAccessProto"
 #sub2Interface="ens8.200.2048"
 #sub2AccessProto="pppoe"
 
-create_vlan_interface $sInterface
+#create_vlan_interface $sInterface
+create_subscriber $sInterface $sName $accessType
+
 subPty="pty \"\/usr\/sbin\/pppoe -I $sInterface -T 80 -m 1452\""
 sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" -e "s/^auth/noauth/" > /etc/ppp/peers/dsl-provider100
 

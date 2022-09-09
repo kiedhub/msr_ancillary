@@ -21,6 +21,12 @@ cd $SUB_SCRIPT_DIR
 #delete_vlan_interface $sub_cvlan
 #delete_vlan_interface $sub_svlan
 
+subName=$1
+
+subscriber_session_remove $subName
+
+exit
+
 
 ##########################################################################
 # disconnect sub and 
@@ -35,7 +41,7 @@ ip netns del $subName
 
 ##########################################################################
 
-remove_subscriber
+subscriber_session_remove
 
 exit
 

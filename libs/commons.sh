@@ -356,6 +356,9 @@ commons_library()
 
   rm_running_config()
   {
+    # removes running configuration
+    # requires destination directory as $1
+
     [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
 
     scriptDir=$1
@@ -369,6 +372,9 @@ commons_library()
 
   wr_running_config()
   {
+    # writes running configuration
+    # requires destination directory as $1
+
     [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
 
     scriptDir=$1
