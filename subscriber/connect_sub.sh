@@ -27,7 +27,7 @@ usage()
   echo "     ipoe6pd - dhcp IPv6 only IA_NA prefix delegation"
   echo "     ipoeds  - dhcp dual-stack (IPv4 and IPv6 IA_NA)"
   echo "     pppoe4  - pppoe IPv4 only"
-  echo "     pppoe6  - pppoe IPv6 only (not yet supported)"
+#  echo "     pppoe6  - pppoe IPv6 only (not yet supported)"
   echo "     pppoeds - pppoe dual-stack"
 }
 

@@ -6,4 +6,4 @@ aaa/volumes/log/*
 #aaa/running.conf
 #bgp/running.conf
 #speedtest/running.conf
-#
+subscriber/.*

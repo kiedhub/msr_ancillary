@@ -144,6 +144,7 @@ subscriber_library()
 
   pppIPv6option()
   {
+    # sets/removes IPv6 option for PPP, requires one of [add|remove]
     [ $DEBUG = true ] && echo "${FUNCNAME[0]} (Action: $1)"
   
     sIPv6action=$1
@@ -205,14 +206,14 @@ subscriber_library()
       [ $DEBUG = true ] && echo "  Bringin up interface $sscIf";\
     }   
 
-    echo "Creating a new ip network namespace: $sscSn"
+    [ $DEBUG = true ] && echo "  Creating a new ip network namespace: $sscSn"
     ip netns add $sscSn
 
-    echo "Transferring subscriber interface $sscIf to network namespace $sscSn"
+    [ $DEBUG = true ] && echo "  Transferring subscriber interface $sscIf to network namespace $sscSn"
     ip link set $sscIf netns $sscSn
 
     # request ip address and run test
-    echo "Switch to newly created namespace $sscSn and connect subscriber"
+    [ $DEBUG = true ] && echo "  Switch to newly created namespace $sscSn and connect subscriber"
     
     subscriber_config_write $sscSn $sscIf $sscAp
 
@@ -239,10 +240,22 @@ subscriber_library()
         ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
         ;;
       pppoe4)
+        pppIPv6option remove
+        [ $DEBUG = true ] && echo "  create file /etc/ppp/peers/dsl-provider100"
+        subPty="pty \"\/usr\/sbin\/pppoe -I $sscIf -T 80 -m 1452\""
+        sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" -e "s/^auth/noauth/" > \
+          /etc/ppp/peers/dsl-provider100
+        ip netns exec $sscSn pon dsl-provider100
         ;;
       pppoe6)
         ;;
       pppoeds)
+        pppIPv6option add
+        [ $DEBUG = true ] && echo "  create file /etc/ppp/peers/dsl-provider100"
+        subPty="pty \"\/usr\/sbin\/pppoe -I $sscIf -T 80 -m 1452\""
+        sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" -e "s/^auth/noauth/" > \
+          /etc/ppp/peers/dsl-provider100
+        ip netns exec $sscSn pon dsl-provider100
         ;;
       *)
         [ $DEBUG = true ] && echo "  Unknown subscriber type: $sscAp, exiting"
@@ -302,10 +315,13 @@ subscriber_library()
         #sudo rm /var/lib/dhclient6.leases
         ;;
       pppoe4)
+        ip netns exec $ssrSn poff dsl-provider100
         ;;
       pppoe6)
+        ip netns exec $ssrSn poff dsl-provider100
         ;;
       pppoeds)
+        ip netns exec $ssrSn poff dsl-provider100
         ;;
       *)
         [ $DEBUG = true ] && echo "  Unknown subscriber type: $ssrAp, exiting"
