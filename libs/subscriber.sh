@@ -72,12 +72,107 @@ subscriber_library()
 
   subscriber_backup_dhclient_leases()
   {
-    echo "need to implement saving /var/lib/dhcp/dhclient*"
+    # backs up dhclient files, requires ip version and subscriber name
+
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (IPVersion: $1, SubName: $2)"
+
+    sbdlIpVersion=$1
+    sbdlSn=$2
+    sbdlV4OrigFile="/var/lib/dhcp/dhclient.leases"
+    sbdlV6OrigFile="/var/lib/dhcp/dhclient6.leases"
+    sbdlV4BakFile="$SUB_SCRIPT_DIR/.$sbdlSn""_dhclient.leases"
+    sbdlV6BakFile="$SUB_SCRIPT_DIR/.$sbdlSn""\_dhclient6.leases"
+
+    case $sbdlIpVersion in 
+      v4)
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Backing up $sbdlV4OrigFile to $sbdlV4BakFile"
+        [ -e $sbdlV4OrigFile ] && sudo cp -f $sbdlV4OrigFile $sbdlV4BakFile
+        ;;
+      v6)
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Backing up $sbdlV6OrigFile to $sbdlV6BakFile"
+        [ -e $sbdlV6OrigFile ] && sudo cp -f $sbdlV6OrigFile $sbdlV6BakFile
+        ;;
+      all)
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Backing up $sbdlV4OrigFile to $sbdlV4BakFile"
+        [ -e $sbdlV4OrigFile ] && sudo cp -f $sbdlV4OrigFile $sbdlV4BakFile
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Backing up $sbdlV6OrigFile to $sbdlV6BakFile"
+        [ -e $sbdlV6OrigFile ] && sudo cp -f $sbdlV6OrigFile $sbdlV6BakFile
+        ;;
+      *)
+        # error message
+        echo "${FUNCNAME[0]} unkown IP version (must be on of v4, v6 or all. Exiting ..."
+        exit
+        ;;
+    esac
   }
 
   subscriber_restore_dhclient_leases()
   {
-    echo "need to implement restoring /var/lib/dhcp/dhclient*"
+    # restores dhclient files, requires ip version and subscriber name
+
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (IPVersion: $1, SubName: $2)"
+
+    srdlIpVersion=$1
+    srdlSn=$2
+    srdlV4OrigFile="/var/lib/dhcp/dhclient.leases"
+    srdlV6OrigFile="/var/lib/dhcp/dhclient6.leases"
+    srdlV4BakFile="$SUB_SCRIPT_DIR/.$srdlSn_dhclient.leases"
+    srdlV6BakFile="$SUB_SCRIPT_DIR/.$srdlSn_dhclient6.leases"
+
+    case $srdlIpVersion in 
+      v4)
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Restoring $srdlV4OrigFile from $srdlV4BakFile"
+        [ -e $srdlV4BakFile ] && sudo mv -b -f $srdlV4BakFile $srdlV4OrigFile || sudo rm -f $srdlV4OrigFile
+        ;;
+      v6)
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Restoring $srdlV6OrigFile from $srdlV6BakFile"
+        [ -e $srdlV6BakFile ] && sudo mv -b -f $srdlV6BakFile $srdlV6OrigFile || sudo rm -f $srdlV6OrigFile
+        ;;
+      all)
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Restoring $srdlV4OrigFile from $srdlV4BakFile"
+        [ -e $srdlV4BakFile ] && sudo mv -b -f $srdlV4BakFile $srdlV4OrigFile || sudo rm -f $srdlV4OrigFile
+        [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} Restoring $srdlV6OrigFile from $srdlV6BakFile"
+        [ -e $srdlV6BakFile ] && sudo mv -b -f $srdlV6BakFile $srdlV6OrigFile || sudo rm -f $srdlV6OrigFile
+        ;;
+      *)
+        # error message
+        echo "  ${FUNCNAME[0]} Error: unkown IP version (must be on of v4, v6 or all. Exiting ..."
+        exit
+        ;;
+    esac
+  }
+
+  pppIPv6option()
+  {
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (Action: $1)"
+  
+    sIPv6action=$1
+  
+    ! [ -e /etc/ppp/options ] && { echo "  File /etc/ppp/options does not exist, exiting." ; exit ; }
+  
+    [ $(sudo cat /etc/ppp/options | grep "^[ ^I]*+ipv6 ipv6cp-use-ipaddr" | wc -l) -gt 0 ] && \
+      hasIPv6option=true || \
+      hasIPv6option=false
+  
+    case $sIPv6action in
+      add)
+        [ $hasIPv6option = false ] && { \
+          [ $DEBUG = true ] && echo "  Adding IPv6 option to /etc/ppp/options"; \
+          sudo echo "+ipv6 ipv6cp-use-ipaddr" >> /etc/ppp/options; \
+        }
+        ;;
+      remove)
+        [ $hasIPv6option = true ] && { \
+        [ $DEBUG = true ] && echo "  Removing IPv6 option from /etc/ppp/options"; \
+          sudo mv /etc/ppp/options /etc/ppp/options.orig; \
+          sudo cat /etc/ppp/options.orig | sed -e 's/+ipv6 ipv6cp-use-ipaddr/#+ipv6 ipv6cp-use-ipaddr/' \
+            > /etc/ppp/options ; \
+          }
+        ;;
+      *)
+        [ $DEBUG = true ] && echo "  Wrong parameter, use remove or add"
+        ;;
+    esac
   }
 
   subscriber_session_create()
@@ -124,21 +219,22 @@ subscriber_library()
     # subscriber type specific connectivity
     case $sscAp in
       ipoe4)
-        subscriber_backup_dhclient_leases
+        subscriber_backup_dhclient_leases v4 $sscSn
         ip netns exec $sscSn dhclient -4 -v $sscIf
         ;;
       ipoe6)
-        subscriber_backup_dhclient_leases
+        subscriber_backup_dhclient_leases v6 $sscSn
         ip netns exec $sscSn dhclient -6 -N -v $sscIf
         #dhclient -6 -N -v $sscIf
         ;;
       ipoe6pd)
-        subscriber_backup_dhclient_leases
+        subscriber_backup_dhclient_leases v6 $sscSn
         ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
         #dhclient -6 -P -N -v $sscIf
         ;;
       ipoeds)
-        subscriber_backup_dhclient_leases
+        subscriber_backup_dhclient_leases v4 $sscSn
+        subscriber_backup_dhclient_leases v6 $sscSn
         ip netns exec $sscSn dhclient -4 -v $sscIf
         ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
         ;;
@@ -162,39 +258,6 @@ subscriber_library()
 
   }
 
-  pppIPv6option()
-  {
-    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (Action: $1)"
-  
-    sIPv6action=$1
-  
-    ! [ -e /etc/ppp/options ] && { echo "  File /etc/ppp/options does not exist, exiting." ; exit ; }
-  
-    [ $(sudo cat /etc/ppp/options | grep "^[ ^I]*+ipv6 ipv6cp-use-ipaddr" | wc -l) -gt 0 ] && \
-      hasIPv6option=true || \
-      hasIPv6option=false
-  
-    case $sIPv6action in
-      add)
-        [ $hasIPv6option = false ] && { \
-          [ $DEBUG = true ] && echo "  Adding IPv6 option to /etc/ppp/options"; \
-          sudo echo "+ipv6 ipv6cp-use-ipaddr" >> /etc/ppp/options; \
-        }
-        ;;
-      remove)
-        [ $hasIPv6option = true ] && { \
-        [ $DEBUG = true ] && echo "  Removing IPv6 option from /etc/ppp/options"; \
-          sudo mv /etc/ppp/options /etc/ppp/options.orig; \
-          sudo cat /etc/ppp/options.orig | sed -e 's/+ipv6 ipv6cp-use-ipaddr/#+ipv6 ipv6cp-use-ipaddr/' \
-            > /etc/ppp/options ; \
-          }
-        ;;
-      *)
-        [ $DEBUG = true ] && echo "  Wrong parameter, use remove or add"
-        ;;
-    esac
-  }
-
   subscriber_session_remove()
   {
     # disconnects a subscriber session, deletes the interface and namespace
@@ -216,26 +279,27 @@ subscriber_library()
     case $ssrAp in
       ipoe4)
         ip netns exec $ssrSn dhclient -4 -r
-        subscriber_restore_dhclient_leases
+        subscriber_restore_dhclient_leases v4 $ssrSn
         #sudo rm /var/lib/dhclient.leases
         ;;
       ipoe6)
         ip netns exec $ssrSn dhclient -6 -r
-        subscriber_restore_dhclient_leases
+        subscriber_restore_dhclient_leases v6 $ssrSn
         #sudo rm /var/lib/dhclient6.leases
         ;;
       ipoe6pd)
         ip netns exec $ssrSn dhclient -6 -r
-        subscriber_restore_dhclient_leases
+        subscriber_restore_dhclient_leases v6 $ssrSn
         #sudo rm /var/lib/dhclient6.leases
         #dhclient -6 -P -N -v $ssrIf
         ;;
       ipoeds)
         ip netns exec $ssrSn dhclient -4 -r
         ip netns exec $ssrSn dhclient -6 -r
-        #subscriber_restore_dhclient_leases
-        sudo rm /var/lib/dhclient.leases
-        sudo rm /var/lib/dhclient6.leases
+        subscriber_restore_dhclient_leases v4 $ssrSn
+        subscriber_restore_dhclient_leases v6 $ssrSn
+        #sudo rm /var/lib/dhclient.leases
+        #sudo rm /var/lib/dhclient6.leases
         ;;
       pppoe4)
         ;;
