@@ -8,7 +8,7 @@
 #sudo tail -n100 ./volumes/log/radacct/$client_ip/$file_name
 
 cont_name=$(sudo docker ps -a |grep -o [a-zA-Z0-9_-]*$1[a-zA-Z0-9_-]*)
-#echo $cont_name
+echo $cont_name
 
 sudo docker logs $cont_name -f
 

@@ -1,8 +1,50 @@
 
 testing Cleartext-Password := "password"
 
+casa Cleartext-Password := "casa"
+  Casa-Actual-Data-Rate-Upstream = "10000",
+  Casa-Actual-Data-Rate-Downstream = "20000"
+
+#Testcase dynamic-template
+#  Casa-Activate-DT = "30 s_Res_10Mbps"
+
+poc_test_1 Cleartext-Password := "casa"
+  Framed-Pool = "casa_v4_test1",
+  Delegated-IPv6-Prefix-Pool = "casa_v6_test1_pd",
+  Framed-IPv6-Pool = "casa_v6_test1_nd"
+
+poc_test_2 Cleartext-Password := "casa"
+  Framed-Pool = "casa_v4_test2",
+  Delegated-IPv6-Prefix-Pool = "casa_v6_test2_pd",
+  Framed-IPv6-Pool = "casa_v6_test2_nd"
+
+  # Framed-IPv6-Address = 2014:21:22::88,
+
+#poc_test_3 Cleartext-Password := "casa"
+#  Framed-IP-Address = 21.1.0.88,
+#  Framed-IP-Netmask = 255.255.255.0,
+#  Casa-Ip-Gateway = 21.1.0.1,
+#  Framed-Route = "ip coa-pd route 10.48.10.0/24",
+#  Delegated-IPv6-Prefix = 2001:1::/64,
+#  Casa-Primary-DNS = "8.8.8.8",
+#  Casa-Secondary-DNS = "8.8.4.4",
+#  Casa-Ipv6-Primary-DNS = "2001:4860:4860::5555",
+#  Casa-Ipv6-Secondary-DNS = "2001:4860:4860::6666"
+
+poc_test_3 Cleartext-Password := "casa"
+  Framed-IP-Address = 100.80.1.200,
+  Framed-IP-Netmask = 255.255.0.0,
+  Casa-Ip-Gateway = 100.80.1.1,
+  Framed-Route = "ip coa-pd route 10.48.10.0/24",
+  Delegated-IPv6-Prefix = 2001:1::/64,
+  Casa-Primary-DNS = "8.8.8.8",
+  Casa-Secondary-DNS = "8.8.4.4",
+  Casa-Ipv6-Primary-DNS = "2001:4860:4860::5555",
+  Casa-Ipv6-Secondary-DNS = "2001:4860:4860::6666"
+
 DEFAULT Auth-Type := Accept
-        Casa-Vrf-Name := "$aaaCasaVrfName"
+
+  # Casa-Vrf-Name := "$aaaCasaVrfName"
 
 
 #
