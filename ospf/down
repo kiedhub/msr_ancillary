@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="ospf"
+#DEBUG=true
+
+# grab configuration
+OSPF_SOURCE=${BASH_SOURCE[0]}
+OSPF_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. $OSPF_SCRIPT_DIR/../functions.sh
+
+cd $OSPF_SCRIPT_DIR
+
+# overwrite any eventually changed configuration
+source $OSPF_SCRIPT_DIR/running.conf
+
+bridgeInterface="$ospf1Interface.$ospf1InterfaceVlan"
+bridgeName="$ospf1BridgeName"
+
+#detach_bridge_interface
+bridge_interface detach $bridgeInterface $bridgeName
+compose_down $SERVICE_LIBRARY
+#remove_running_conf_file
+rm_running_config
+
+#sudo docker-compose -p routing -f compose.yaml down

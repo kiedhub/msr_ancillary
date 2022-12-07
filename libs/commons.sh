@@ -14,7 +14,7 @@ commons_library()
 
   if_up()
   {
-    # checks interface status and bring it up in cas it is down
+    # checks interface status and bring it up in case it is down
     # requires interface name
     
     [ -z $1 ] && ifUpId=" NO IF ID" || ifUpId=$1
@@ -143,6 +143,9 @@ commons_library()
       tacplus)
         sudo docker-compose -p tacplus -f compose.yaml up -d
         ;;
+      ospf)
+        sudo docker-compose -p ospf -f compose.yaml up -d
+        ;;
       *)
         return
         ;;
@@ -164,6 +167,9 @@ commons_library()
         ;;
       tacplus)
         sudo docker-compose -p tacplus -f compose.yaml down
+        ;;
+      ospf)
+        sudo docker-compose -p ospf -f compose.yaml down
         ;;
       *)
         return

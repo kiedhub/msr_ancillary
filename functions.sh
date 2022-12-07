@@ -17,6 +17,7 @@ LIBS_DIR="$FUNC_LIB_SCRIPT_DIR/libs"
 . $LIBS_DIR/aaa.sh
 . $LIBS_DIR/speedtest.sh
 . $LIBS_DIR/bgp.sh
+. $LIBS_DIR/ospf.sh
 
 ### main
 case $SERVICE_LIBRARY in
@@ -35,8 +36,11 @@ case $SERVICE_LIBRARY in
   tacplus)
     tacplus_library
     ;;
+  ospf)
+    ospf_library
+    ;;
   *) 
-    echo "Trying to call unknown library \"$SERVICE_LIBRARY\""
+    echo "${BASH_SOURCE[0]}: Trying to call unknown library \"$SERVICE_LIBRARY\""
     exit
     ;;
 esac

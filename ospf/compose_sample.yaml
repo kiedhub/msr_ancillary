@@ -1,0 +1,47 @@
+version: '3'
+
+#- /home/ralf/docker/bird-routing/bgp_sample/volumes:/tmp/volumes:ro
+# sudo docker run -d  -p 55022:22 --name bird1 bird
+services:
+  ospf1:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55056:22"
+    networks:
+      msr_ospf1:
+        ipv4_address: $ospf1IpAddress
+      ospf1_dn:
+        ipv4_address: 11.20.0.10
+    volumes:
+      - ./customize/ospf1:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+  dn:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55057:22"
+    networks:
+      ospf1_dn:
+        ipv4_address: 11.20.0.30
+    volumes:
+      - ./customize/dn:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  msr_ospf1:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: $ospf1BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: $ospf1BridgeSubnet
+  ospf1_dn:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: $ospf2BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: 11.20.0.0/24

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="ospf"
+DEBUG=true
+
+# grab configuration
+OSPF_SOURCE=${BASH_SOURCE[0]}
+OSPF_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+. $OSPF_SCRIPT_DIR/../functions.sh
+
+cd $OSPF_SCRIPT_DIR
+
+composeSampleFile="$OSPF_SCRIPT_DIR/compose_sample.yaml"
+composeDestFile="$OSPF_SCRIPT_DIR/compose.yaml"
+
+bridgeInterface="$ospf1Interface.$ospf1InterfaceVlan"
+bridgeName="$ospf1BridgeName"
+
+# # physical or vlan interface connecting to the ospf router bridges
+# ospf1BridgeName="msr-ospf1"
+# ospf2BridgeName="ospf1-dn"
+# ospf1Interface="ens7"
+# ospf1InterfaceVlan="2550" # id '0' -> no vlan configuration
+# ospf1IpAddress="192.168.3.20"
+# ospf1BridgeSubnet="192.168.3.0/24"
+
+build_compose_file
+wr_running_config $OSPF_SCRIPT_DIR
+compose_up $SERVICE_LIBRARY 
+bridge_interface attach $bridgeInterface $bridgeName
+
+exit
+
+# some routes for static testing
+# should not be issued when testing bgp
+get_container_id()
+{
+  routerId=$1
+
+  contId=$(sudo docker ps |grep $routerId | awk '{ print $1 }')
+
+#  echo "sudo docker exec -it $contId sh -c 'ip route add $destIp via $gateway'"
+#  sudo docker exec -it $contId sh -c "'ip route add $destIp via $gateway'"
+#  sudo docker exec -it $contId sh -c 'ip route '
+}
+
+get_container_id isp1
+sudo docker exec -it $contId sh -c 'ip route add 100.70.0.0/16 via 192.168.1.20'
+sudo docker exec -it $contId sh -c 'ip route add 100.80.0.0/16 via 192.168.1.20'
+sudo docker exec -it $contId sh -c 'ip route'
+
+get_container_id isp2
+sudo docker exec -it $contId sh -c 'ip route add 100.70.0.0/16 via 192.168.2.20'
+sudo docker exec -it $contId sh -c 'ip route add 100.80.0.0/16 via 192.168.2.20'
+sudo docker exec -it $contId sh -c 'ip route'
+
+
+
