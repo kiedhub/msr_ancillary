@@ -7,11 +7,15 @@ services:
     image: rsattler/bgp-router:1.0
     ports:
       - "55056:22"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     networks:
       msr_ospf1:
         ipv4_address: 192.168.3.10
+        ipv6_address: fd00::192:168:3:10
       ospf1_dn:
         ipv4_address: 11.20.0.10
+        ipv6_address: fd00::11:20:0:10
     volumes:
       - ./customize/ospf1:/tmp/customize:ro
     cap_add:
@@ -20,9 +24,12 @@ services:
     image: rsattler/bgp-router:1.0
     ports:
       - "55057:22"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
     networks:
       ospf1_dn:
         ipv4_address: 11.20.0.30
+        ipv6_address: fd00::11:20:0:30
     volumes:
       - ./customize/dn:/tmp/customize:ro
     cap_add:
@@ -32,16 +39,20 @@ networks:
   msr_ospf1:
     driver: bridge
     driver_opts:
+      com.docker.network.enable_ipv6: "true"
       com.docker.network.bridge.name: msr-ospf1
     ipam:
       driver: default
       config:
         - subnet: 192.168.3.0/24
+        - subnet: fd00::192:168:3:0/112
   ospf1_dn:
     driver: bridge
     driver_opts:
+      com.docker.network.enable_ipv6: "true"
       com.docker.network.bridge.name: ospf1-dn
     ipam:
       driver: default
       config:
         - subnet: 11.20.0.0/24
+        - subnet: fd00::11:20:0:0/112

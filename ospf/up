@@ -27,6 +27,11 @@ bridgeName="$ospf1BridgeName"
 
 build_compose_file
 wr_running_config $OSPF_SCRIPT_DIR
+# need to get ipv6 address configuration into the container. Docker compose doesn't
+# seem to work
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/customize/ospf1/running.conf
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/customize/dn/running.conf
+
 compose_up $SERVICE_LIBRARY 
 bridge_interface attach $bridgeInterface $bridgeName
 

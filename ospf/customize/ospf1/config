@@ -1,8 +1,17 @@
 #!/usr/bin/env ash
 
+source /tmp/customize/running.conf
+
+# grep prefix
+ospf1Ipv6Prefix=$(echo "$ospf1v6BridgeSubnet" | sed -e 's/^.*\//\//')
+
 # configuration parameters
 
 # loopback interface
 lo_name=lo10
 lo_ip=10.255.254.10/32
+lo_ipv6=fd00::10:255:254:10/128
+
+eth0_ipv6="$ospf1Ipv6Address$ospf1Ipv6Prefix"
+eth1_ipv6="fd00::11:20:0:10/112"
 
