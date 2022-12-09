@@ -18,6 +18,10 @@ cont_id=$(docker ps -a | grep $serviceName | awk -s '{ print $1 }')
 
 echo "Testing container $serviceName"
 echo
+echo "Testing IP connectivity ospf1 -> dn"
+
+echo "Testing IP connectivity ospf1 -> msr"
+
 echo "Ping test $serviceName -> ospf neighbor"
 echo "sudo docker -it $cont_id /bin/sh -c \"ping -c 3 192.168.3.20\""
 sudo docker exec -it $cont_id /bin/sh -c "ping -c 3 192.168.3.20"

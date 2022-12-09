@@ -1,4 +1,4 @@
-version: '3'
+version: '3.3'
 
 #- /home/ralf/docker/bird-routing/bgp_sample/volumes:/tmp/volumes:ro
 # sudo docker run -d  -p 55022:22 --name bird1 bird
