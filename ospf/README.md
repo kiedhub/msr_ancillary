@@ -1,6 +1,9 @@
-# BGP 4 router example
+# OSPF v2 and v3 router example
 
-The project creates 6 containers using the images created in the upper folder and arrange them as per the diagram shown below. The example sets up a network of 4 bgp routers allowing connectivty between the 2 enpoints (rg and dn).
+The project creates 2 containers using the available bgp-router images They are getting arranged as per below diagram. The example sets up a network of a single ospf router and one data network element. The scenario is meant to be a PoC type of setup to verify / demo ospf v2 and v3 functionality on the device under test.
+A later version may get another ospf router instance added to test multiple data paths and redundancy.
+
+# TO BE ADOPTED !!!
 
 ![Diagram](pics/bgp_sample4R.png)
 
