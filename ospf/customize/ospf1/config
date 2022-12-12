@@ -14,4 +14,5 @@ lo_ipv6=fd00::10:255:254:10/128
 
 eth0_ipv6="$ospf1Ipv6Address$ospf1Ipv6Prefix"
 eth1_ipv6="fd00::11:20:0:10/112"
+#eth1_link="fe80::11:20:0:10/64"
 

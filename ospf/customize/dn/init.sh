@@ -1,5 +1,7 @@
 #!/usr/bin/env ash
 
+apk add tcpdump
+
 # docker container customization
 
 # load configuration
@@ -26,4 +28,5 @@ ln -s /tmp/customize/bird.conf /usr/local/etc/bird.conf
 apk add tcptraceroute
 
 ip route replace default via 11.20.0.10
-ip -6 route replace default via fd00::11:20:0:10
+ip -6 route replace default via fd00::11:20:0:10 dev eth0
+#ip -6 route replace default via fe80::11:20:0:10 dev eth0

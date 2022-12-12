@@ -5,7 +5,9 @@
 
 #sudo tail -n100 ./volumes/log/radacct/$client_ip/$file_name
 
-serviceName="ospf1"
+[ $# -eq 0 ] && serviceName="ospf1" || serviceName="$1"
+
+#serviceName="ospf1"
 
 cont_name=$(docker ps -a | grep $serviceName | awk -s '{ print $1 }')
 

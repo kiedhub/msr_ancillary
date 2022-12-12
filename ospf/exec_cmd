@@ -7,9 +7,11 @@
 
 serviceName="$1"
 cont_id=$(docker ps -a | grep $serviceName | awk -s '{ print $1 }')
+#echo "Container ID: $cont_id"
 
 cmd="$2"
-echo "sudo docker exec -it $cont_id /bin/sh -c \"\""
+echo "sudo docker exec -it $cont_id /bin/sh -c \"$2\""
+#sudo docker exec -it $cont_id /bin/sh -c $2
 
 #cont_id=$(sudo docker ps -a |grep -o [a-zA-Z0-9_-]*$serviceName[a-zA-Z0-9_-]*)
 #cont_id="tacplus_tac_plus_1"
