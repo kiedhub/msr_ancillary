@@ -6,4 +6,4 @@ serviceName="$1"
 cont_id=$(docker ps -a | grep $serviceName | awk -s '{ print $1 }')
 #echo "Container ID: $cont_id"
 
-sudo docker exec -it $cont_id /bin/sh -c "sh"
+sudo docker exec -it $cont_id /bin/sh -c "export PS1=\"$serviceName\# \" && sh"
