@@ -36,7 +36,7 @@ services:
         ipv4_address: 11.0.2.40
         ipv6_address: fd00::11:0:2:40
     volumes:
-      - ./customize/ospf1:/tmp/customize:ro
+      - ./customize/ospf2:/tmp/customize:ro
     cap_add:
       - NET_ADMIN
   ospf3:
@@ -49,15 +49,15 @@ services:
     networks:
       ospf1_ospf3:
         ipv4_address: 11.0.1.50
-        #ipv6_address: fd00::11:0:1:50
+        ipv6_address: fd00::11:0:1:50
       ospf2_ospf3:
         ipv4_address: 11.0.2.50
-        #ipv6_address: fd00::11:0:2:40
+        ipv6_address: fd00::11:0:2:40
       ospf3_dn:
         ipv4_address: 11.20.0.50
         ipv6_address: fd00::11:20:0:50
     volumes:
-      - ./customize/ospf1:/tmp/customize:ro
+      - ./customize/ospf3:/tmp/customize:ro
     cap_add:
       - NET_ADMIN
   dn:
@@ -105,7 +105,7 @@ networks:
       driver: default
       config:
         - subnet: 11.0.1.0/24
-          #- subnet: $ospf2v6BridgeSubnet
+        - subnet: $ospf2v6BridgeSubnet
   ospf2_ospf3:
     driver: bridge
     driver_opts:
@@ -115,7 +115,7 @@ networks:
       driver: default
       config:
         - subnet: 11.0.2.0/24
-          #- subnet: $ospf2v6BridgeSubnet
+        - subnet: $ospf2v6BridgeSubnet
   ospf3_dn:
     driver: bridge
     driver_opts:
