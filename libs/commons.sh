@@ -252,6 +252,22 @@ commons_library()
     # sets sVid/cVid or vid, isNetedVlan and ifId
     check_vlan $vlanInterface
 
+    ## bridge interface handling
+    # bridge is identified by its name starting with 'br' (e.g. 'br1')
+    [ $(echo "$ifId" | grep -e '^br.*' | wc -l ) -eq 1 ] && \
+      isBridgeIf=true || isBridgeIf=false
+
+    # if bridge interface, check if it exists and create if not
+    if [ $isBridgeIf = true ]; then
+      [ $(ip link show | grep "$ifId" | wc -l ) -eq 1 ] && \
+        bridgeIfExist=true || bridgeIfExist=false
+
+      # bridge does not exist, let's create it.
+      [ $bridgeIfExist = false ] && \
+        brctl addbr $ifId
+    fi
+    ## end bridge handling, bridge can be handled like a regular if now
+
     # parent interface may be down after reboot, so let's check and bring it up
     [ $DEBUG = true ] && echo "  Bring up parent if: $ifId"
     if_up $ifId

@@ -14,12 +14,26 @@ cd $SUB_SCRIPT_DIR
 
 SET_DNS=false
 
+# soft-gre enhancement
+# additional parameters required
+# -T tunnel-type (gre)
+# -l local tunnel-interface, dotted notation for VLAN configuration (if must not exist)
+# -I local tunnel-endpoint IP address (incl prefix e.g. 10.0.0.1/24)
+# -R remote interface IP address (incl prefix e.g. 10.0.0.2/24), must be in the same subnet as -I
+# -r remote tunnel-endpoint IP address (incl prefix e.g. 20.0.0.1/24), def route will be generated automatically
+# -i Interface to use (e.g. ens8.100.2048), dotted notation for VLAN configuration. Must be a not-yet existing bridge interface
+
 usage()
 {
   echo "Usage: connect_subscriber.sh [ -i interface ] [ -t connectivity-type ] <subsciber-name>"
-  echo "Missing options will pulled from ancillary.conf"
+  echo "Connects a new subscriber. Optional arguments can be used to overwrite or complement"
+  echo "  the subscribers' configuration in ancillary.conf"
   echo "Options"
-  echo " -i  Interface to use (e.g. ens8.100.2048), dotted notation for VLAN configuration." 
+  echo " -T  Tunnel-type (optional)"
+  echo "     gre   - creates a soft-gre to encapsulate subscriber traffic"
+  echo " -i  Interface to use. For non-tunnel traffic this will be the physical interface (incl opt VLAN),"
+  echo "     for gre tunneled traffic this will be a bridge interface connecting throught the tunnel."
+  echo "     (e.g. ens8.100.2048 or br1.111.222), dotted notation for VLAN configuration." 
   echo "     The interface must not yet exist and gets created."
   echo " -t  Connectivity type, please chose one of"
   echo "     ipoe4   - dhcp IPv4 only"
@@ -29,6 +43,13 @@ usage()
   echo "     pppoe4  - pppoe IPv4 only"
 #  echo "     pppoe6  - pppoe IPv6 only (not yet supported)"
   echo "     pppoeds - pppoe dual-stack"
+  echo " GRE-Tunnel specific parameters"
+  echo " -l  GreInterface: local tunnel-interface, dotted notation for VLAN configuration (e.g. ens8.111.222)"
+  echo "     The interface must not yet exist and gets created."
+  echo " -I  GreInterfaceIp: local tunnel-endpoint IP address (incl prefix e.g. 10.0.0.1/24)"
+  echo " -R  GreRemInterfaceIp: remote interface IP address (incl prefix e.g. 10.0.0.2/24), must be in the same subnet as -I"
+  echo " -r  GerTunnelEndpoint: remote tunnel-endpoint IP address (incl prefix e.g. 20.0.0.1/24)." 
+  echo "     The default route from -I to -r will be automaticall generated automatically (via -R)"
 }
 
 [ -z $1 ] && { echo "Error: Missing subscriber name"; usage ; exit; } || subName=${@: -1}
@@ -37,8 +58,16 @@ usage()
 get_subconfig $subName
 subInterface=$gsInterface
 subAccessProto=$gsAccessProto
+# new params from gre enhancement
+subGreEnabled=$gsGreEnabled
+subGreInterface=$gsGreInterface
+subGreInterfaceIp=$gsGreInterfaceIp
+subGreRemInterfaceIp=$gsGreRemInterfaceIp
+subGreTunnelEndpoint=$gsGreTunnelEndpoint
 
-while getopts ":i:t:h:" option; do
+subGreTunnelConf="$subName $subGreInterface $subGreInterfaceIp $subGreRemInterfaceIp $subGreTunnelEndpoint"
+
+while getopts ":i:t:h:l:I:R:r:" option; do
   case $option in
      i) 
        subInterface=$OPTARG
@@ -48,15 +77,44 @@ while getopts ":i:t:h:" option; do
        subAccessProto=$OPTARG
        ! [ -z $subAccessProto ] && echo "Overwriting access protocol type with $subAccessProto"
        ;;
+     l)
+       subGreInterface=$OPTARG
+       ! [ -z $subGreInterface ] && echo "Overwriting access protocol type with $subGreInterface"
+       ;;
+     I)
+       subGreInterfaceIp=$OPTARG
+       ! [ -z $subGreInterfaceIp ] && echo "Overwriting access protocol type with $subGreInterfaceIp"
+       ;;
+     R)
+       subGreRemInterfaceIp=$OPTARG
+       ! [ -z $subGreRemInterfaceIp ] && echo "Overwriting access protocol type with $subGreRemInterfaceIp"
+       ;;
+     r)
+       subGreTunnelEndpoint=$OPTARG
+       ! [ -z $subGreTunnelEndpoint ] && echo "Overwriting access protocol type with $subGreTunnelEndpoint"
+       ;;
   esac
 done
 
 [ $DEBUG = true ] && echo "Name: $subName, Interface: $subInterface, AccessProto: $subAccessProto"
+  
+# set up gre tunnel
+$subGreEnabled && echo "Setting up GRE Tunnel"; subscriber_gretunnel_create $subGreTunnelConf
+
+#ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
+# test-stop
+exit
 
 #create_vlan_interface $subInterface
 subscriber_session_create $subInterface $subName $subAccessProto
 
 exit
+
+
+
+## what's the below??? -> doesn't seem to be required anymore
+
+
 
 ########################
 # put everything into a separate ip namespace
@@ -90,6 +148,11 @@ echo ""
 
 ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
 exit
+
+
+
+#####
+# below is obsolete ?
 
 ##############################################################################
 # common script header (adapt log file name)

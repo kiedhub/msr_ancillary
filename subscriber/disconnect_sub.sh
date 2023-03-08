@@ -23,7 +23,8 @@ cd $SUB_SCRIPT_DIR
 
 subName=$1
 
-subscriber_session_remove $subName
+#subscriber_session_remove $subName
+subscriber_gretunnel_remove $subName
 
 exit
 

@@ -21,7 +21,13 @@ subscriber_library()
   
     gsIfVarName="$gsSubId""Interface"
     gsApVarName="$gsSubId""AccessProto"
-  
+    # additional params for soft-gre connectivity
+    gsGeVarName="$gsSubId""GreEnabled"
+    gsGIfVarName="$gsSubId""GreInterface"
+    gsGIfIpVarName="$gsSubId""GreInterfaceIp"
+    gsGRemIfIpVarName="$gsSubId""GreRemInterfaceIp"
+    gsGTEVarName="$gsSubId""GerTunnelEndpoint"
+
     [ -z ${!gsIfVarName} ] && { \
       [ $DEBUG = true ] && echo "  No if config for subscriber \"$gsSubName\" "; \
       } || { gsInterface=${!gsIfVarName}; \
@@ -29,9 +35,34 @@ subscriber_library()
   
     [ -z ${!gsApVarName} ] && { \
       [ $DEBUG = true ] && echo "  No access proto config for subscriber \"$gsSubName\""; \
-      } || { \
-      gsAccessProto=${!gsApVarName}; \
+      } || { gsAccessProto=${!gsApVarName}; \
       [ $DEBUG = true ] && echo "  $gsApVarName : $gsAccessProto"; }
+
+    [ -z ${!gsGeVarName} ] && { \
+      [ $DEBUG = true ] && echo "  No gsGeVarName config for subscriber \"$gsSubName\", setting it to 'false' "; \
+      gsGreEnabled=false; \
+      } || { gsGreEnabled=${!gsGeVarName}; \
+      [ $DEBUG = true ] && echo "  $gsGeVarName : $gsGreEnabled"; }
+
+    [ -z ${!gsGIfVarName} ] && { \
+      [ $DEBUG = true ] && echo "  No gsGIfVarName config for subscriber \"$gsSubName\" "; \
+      } || { gsGreInterface=${!gsGIfVarName}; \
+      [ $DEBUG = true ] && echo "  $gsGIfVarName : $gsGreInterface"; }
+
+    [ -z ${!gsGIfIpVarName} ] && { \
+      [ $DEBUG = true ] && echo "  No gsGIfIpVarName config for subscriber \"$gsSubName\" "; \
+      } || { gsGreInterfaceIp=${!gsGIfIpVarName}; \
+      [ $DEBUG = true ] && echo "  $gsGIfIpVarName : $gsGreInterfaceIp"; }
+
+    [ -z ${!gsGRemIfIpVarName} ] && { \
+      [ $DEBUG = true ] && echo "  No gsGRemIfIpVarName config for subscriber \"$gsSubName\" "; \
+      } || { gsGreRemInterfaceIp=${!gsGRemIfIpVarName}; \
+      [ $DEBUG = true ] && echo "  $gsGRemIfIpVarName : $gsGreRemInterfaceIp"; }
+
+    [ -z ${!gsGTEVarName} ] && { \
+      [ $DEBUG = true ] && echo "  No gsGTEVarName config for subscriber \"$gsSubName\" "; \
+      } || { gsGreTunnelEndpoint=${!gsGTEVarName}; \
+      [ $DEBUG = true ] && echo "  $gsGTEVarName : $gsGreTunnelEndpoint"; }
   }
 
   subscriber_config_remove()
@@ -67,6 +98,31 @@ subscriber_library()
     echo "$scwSn" > $scwFile
     echo "$scwIf" >> $scwFile
     echo "$scwAp" >> $scwFile
+
+  }
+
+  subscriber_tunnel_config_write()
+  {
+    # writes gre tunnel configuration data
+    # requires: subName, subGreInterface, subGreInterfaceIp, subGreRemInterfaceIp, subGreTunnelEndpoint
+
+    $DEBUG && echo "${FUNCNAME[0]} (SubName: $1, GreInterface: $2, GreLocalIp: $3, GreRemoteIp: $4, GreTunnelEndpoint: $5)"
+
+    stcwSn=$1
+    stcwIf=$2
+    stcwIfIp=$3
+    stcwRIfIp=$4
+    stcwTeIp=$5
+
+    stcwFile="$SUB_SCRIPT_DIR/.$stcwSn-gre.cfg"
+
+    [ -e $stcwFile ] && subscriber_config_remove $stcwFile
+
+    echo "$stcwSn" > $stcwFile
+    echo "$stcwIf" >> $stcwFile
+    echo "$stcwIfIp" >> $stcwFile
+    echo "$stcwRIfIp" >> $stcwFile
+    echo "$stcwTeIp" >> $stcwFile
 
   }
 
@@ -176,6 +232,102 @@ subscriber_library()
     esac
   }
 
+  subscriber_gretunnel_create()
+  {
+    # sets up a gre-tunnel for connecting a subscriber to the BNG
+    # requires: subName, subGreInterface, subGreInterfaceIp, subGreRemInterfaceIp, subGreTunnelEndpoint
+    
+    sgcSn=$1
+    sgcIf=$2
+    sgcIfIp=$3
+    sgcRIfIp=$4
+    sgcTeIp=$5
+
+    # cut off ip prefix
+    sgcIfIpNoPrefix=$(echo "$sgcIfIp" | sed -e 's/\// /' | awk -s '{ print $1 }')
+
+    # first, create the interface
+    check_vlan $sgcIf
+    $DEBUG && echo "${FUNCNAME[0]} (SubName: $1, GreInterface: $2, GreLocalIp: $3, GreRemoteIp: $4, GreTunnelEndpoint: $5)"
+
+    [ $vlanOfType = "none" ] && isVlanIf=false || isVlanIf=true
+
+    [ $isVlanIf = true ] && create_vlan_interface $sgcIf
+
+    # make sure parent if is up
+    [ $isVlanIf = false ] && { \ 
+      sudo ip link set dev $sgcIf up;\
+      $DEBUG && echo "  Bringin up interface $sgcIf";\
+    }   
+
+    $DEBUG  && echo "  Creating a new ip network namespace: $sgcSn"
+    ip netns add $sgcSn
+
+    $DEBUG && echo "  Transferring gre tunnel interface $sgcIf to network namespace $sgcSn"
+    ip link set $sgcIf netns $sgcSn
+    ip netns exec $sgcSn ip link set dev $sgcIf up 
+
+    $DEBUG && echo "  netns: add $sgcIfIp to interface $sgcIf"
+    ip netns exec $sgcSn ip a add $sgcIfIp dev $sgcIf
+
+    $DEBUG && echo "  netns: adding route to gre tunnelendpoint $sgcTeIp/32 via $sgcRIfIp"
+    ip netns exec $sgcSn ip route add $sgcTeIp/32 via $sgcRIfIp
+
+    $DEBUG && echo "  netns: creating gre tunnel between $sgcIfIp and $sgcTeIp"
+    ip netns exec $sgcSn ip link add gretap1 type gretap local $sgcIfIpNoPrefix remote $sgcTeIp
+    ip netns exec $sgcSn ip link set dev gretap1 up
+
+    ip netns exec $sgcSn ip link show
+
+    #$DEBUG && echo "  creating bridge interface $sgcTeIp"
+    
+    subscriber_tunnel_config_write $sgcSn $sgcIf $sgcIfIp $sgcRIfIp $sgcTeIp 
+  }
+
+  subscriber_gretunnel_remove()
+  {
+
+    # remove gre tunnel, interface and namespace
+    # requires sub-name as $1 and the written config file (sub-name.cfg)
+    # configuration file structure (stcwFile="$SUB_SCRIPT_DIR/.$stcwSn-gre.cfg")
+    #   echo "$stcwSn" > $stcwFile
+    #   echo "$stcwIf" >> $stcwFile
+    #   echo "$stcwIfIp" >> $stcwFile
+    #   echo "$stcwRIfIp" >> $stcwFile
+    #   echo "$stcwTeIp" >> $stcwFile
+
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
+    
+    sgrSn=$1
+    sgrFile="$SUB_SCRIPT_DIR/.$sgrSn-gre.cfg" 
+    sgrIf=$(cat $sgrFile | sed '2q;d')
+    sgrIfIp=$(cat $sgrFile | sed '3q;d')
+    sgrRIfIp=$(cat $sgrFile | sed '4q;d')
+    sgrTeIp=$(cat $sgrFile | sed '5q;d')
+
+    $DEBUG && echo "${FUNCNAME[0]} (SubName: $1, GreInterface: $2, GreLocalIp: $3, GreRemoteIp: $4, GreTunnelEndpoint: $5)"
+
+    check_vlan $sgrIf
+    [ $DEBUG = true ] && echo "  Vlan Type: $vlanOfType"
+
+    $DEBUG && echo "  netns $sgrSn: removing gre tunnel between $sgrIfIp and $sgrTeIp"
+    ip netns exec $sgrSn ip link delete gretap1 
+
+    $DEBUG && echo "  netns $sgrSn: removing route to gre tunnelendpoint $sgrTeIp/32 via $sgrRIfIp"
+    ip netns exec $sgrSn ip route del $sgrTeIp/32 via $sgrRIfIp
+
+    [ $vlanOfType = "none" ] && isVlanIf=false || isVlanIf=true
+    ip netns exec $sgrSn ip link del dev $sgrIf
+
+		ip netns del $sgrSn
+
+    # delete vlan interface
+    [ $isVlanIf = true ] && delete_vlan_interface $sgrIf
+
+    subscriber_config_remove $sgrFile
+
+  }
+
   subscriber_session_create()
   {
     # sets up subscriber interface and connects sub to BNG 
@@ -211,6 +363,12 @@ subscriber_library()
 
     [ $DEBUG = true ] && echo "  Transferring subscriber interface $sscIf to network namespace $sscSn"
     ip link set $sscIf netns $sscSn
+
+    # if gre enabled, gretap needs to be attached to bridge
+    [ $subGreEnabled = true ] && { \
+      ip netns exec $sscSn brctl addif $sscIf gretap1;\
+      [ $DEBUG = true ] && echo "  GreEnabled: attaching gretap1 to bridge $sscIf";\
+    }
 
     # request ip address and run test
     [ $DEBUG = true ] && echo "  Switch to newly created namespace $sscSn and connect subscriber"
