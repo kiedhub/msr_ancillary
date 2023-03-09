@@ -113,6 +113,7 @@ subscriber_library()
     stcwIfIp=$3
     stcwRIfIp=$4
     stcwTeIp=$5
+    stcwBrIf=$6
 
     stcwFile="$SUB_SCRIPT_DIR/.$stcwSn-gre.cfg"
 
@@ -123,6 +124,7 @@ subscriber_library()
     echo "$stcwIfIp" >> $stcwFile
     echo "$stcwRIfIp" >> $stcwFile
     echo "$stcwTeIp" >> $stcwFile
+    echo "$stcwBrIf" >> $stcwFile
 
   }
 
@@ -242,6 +244,7 @@ subscriber_library()
     sgcIfIp=$3
     sgcRIfIp=$4
     sgcTeIp=$5
+    sgcBrIf=$6
 
     # cut off ip prefix
     sgcIfIpNoPrefix=$(echo "$sgcIfIp" | sed -e 's/\// /' | awk -s '{ print $1 }')
@@ -277,11 +280,23 @@ subscriber_library()
     ip netns exec $sgcSn ip link add gretap1 type gretap local $sgcIfIpNoPrefix remote $sgcTeIp
     ip netns exec $sgcSn ip link set dev gretap1 up
 
+    check_vlan $sgcBrIf
+    sgcParentBrIf=$ifId
+
+    $DEBUG && echo "  netns($sgcSn): creating bridge $sgcParentBrIf and bridge-interface $sgcBrIf"
+
+    create_vlan_interface_in_netns $sgcBrIf $sgcSn
+
+    # attache gretap to bridge
+    ip netns exec $sgcSn brctl addif $sgcParentBrIf gretap1
+    
+    #[ $isVlanIf = true ] && create_vlan_interface $sgcIf
+
     ip netns exec $sgcSn ip link show
 
     #$DEBUG && echo "  creating bridge interface $sgcTeIp"
     
-    subscriber_tunnel_config_write $sgcSn $sgcIf $sgcIfIp $sgcRIfIp $sgcTeIp 
+    subscriber_tunnel_config_write $sgcSn $sgcIf $sgcIfIp $sgcRIfIp $sgcTeIp $sgcBrIf
   }
 
   subscriber_gretunnel_remove()
@@ -295,6 +310,7 @@ subscriber_library()
     #   echo "$stcwIfIp" >> $stcwFile
     #   echo "$stcwRIfIp" >> $stcwFile
     #   echo "$stcwTeIp" >> $stcwFile
+    #   echo "$stcwBrIf" >> $stcwFile
 
     [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     
@@ -304,20 +320,26 @@ subscriber_library()
     sgrIfIp=$(cat $sgrFile | sed '3q;d')
     sgrRIfIp=$(cat $sgrFile | sed '4q;d')
     sgrTeIp=$(cat $sgrFile | sed '5q;d')
+    sgrBrIf=$(cat $sgrFile | sed '6q;d')
 
-    $DEBUG && echo "${FUNCNAME[0]} (SubName: $1, GreInterface: $2, GreLocalIp: $3, GreRemoteIp: $4, GreTunnelEndpoint: $5)"
+    $DEBUG && echo "${FUNCNAME[0]} (SubName: $1, GreInterface: $2, GreLocalIp: $3, GreRemoteIp: $4, GreTunnelEndpoint: $5, subInterface: $6)"
 
     check_vlan $sgrIf
     [ $DEBUG = true ] && echo "  Vlan Type: $vlanOfType"
 
-    $DEBUG && echo "  netns $sgrSn: removing gre tunnel between $sgrIfIp and $sgrTeIp"
+    $DEBUG && echo "  netns($sgrSn): removing gre tunnel between $sgrIfIp and $sgrTeIp"
     ip netns exec $sgrSn ip link delete gretap1 
 
-    $DEBUG && echo "  netns $sgrSn: removing route to gre tunnelendpoint $sgrTeIp/32 via $sgrRIfIp"
+    $DEBUG && echo "  netns($sgrSn): removing route to gre tunnelendpoint $sgrTeIp/32 via $sgrRIfIp"
     ip netns exec $sgrSn ip route del $sgrTeIp/32 via $sgrRIfIp
 
     [ $vlanOfType = "none" ] && isVlanIf=false || isVlanIf=true
+
+    $DEBUG && echo "  netns($sgrSn): removing $sgrIf"
     ip netns exec $sgrSn ip link del dev $sgrIf
+
+    $DEBUG && echo "  netns($sgrSn): removing $sgrBrIf"
+    ip netns exec $sgrSn ip link del dev $sgrBrIf
 
 		ip netns del $sgrSn
 
@@ -349,26 +371,32 @@ subscriber_library()
     #[ $(echo $subInterface | grep "\." | wc -l) -gt 0 ] && isVlanIf=true || isVlanIf=false 
     #[ $DEBUG = true ] && echo "    Vlan check, isVlanIf=$isVlanIf"
 
-    # set up vlan interface
-    [ $isVlanIf = true ] && create_vlan_interface $sscIf
+    # setup subscriber interface in case it is not a gre setup
+    [ $(ip netns ls | grep $sscSn | wc -l) -gt 0 ] && nsExist=true || nsExist=false
+    if [ $nsExist = false ]; then
     
-    # make sure parent if is up
-    [ $isVlanIf = false ] && { \ 
-      sudo ip link set dev $sscIf up;\
-      [ $DEBUG = true ] && echo "  Bringin up interface $sscIf";\
-    }   
+      # set up vlan interface
+      [ $isVlanIf = true ] && create_vlan_interface $sscIf
+      
+      # make sure parent if is up
+      [ $isVlanIf = false ] && { \ 
+        sudo ip link set dev $sscIf up;\
+        [ $DEBUG = true ] && echo "  Bringin up interface $sscIf";\
+      }   
 
-    [ $DEBUG = true ] && echo "  Creating a new ip network namespace: $sscSn"
-    ip netns add $sscSn
+      $DEBUG = && echo "  Creating a new ip network namespace: $sscSn"
+      ip netns add $sscSn
 
-    [ $DEBUG = true ] && echo "  Transferring subscriber interface $sscIf to network namespace $sscSn"
-    ip link set $sscIf netns $sscSn
+      [ $DEBUG = true ] && echo "  Transferring subscriber interface $sscIf to network namespace $sscSn"
+      ip link set $sscIf netns $sscSn
+    fi
 
-    # if gre enabled, gretap needs to be attached to bridge
-    [ $subGreEnabled = true ] && { \
-      ip netns exec $sscSn brctl addif $sscIf gretap1;\
-      [ $DEBUG = true ] && echo "  GreEnabled: attaching gretap1 to bridge $sscIf";\
-    }
+    # doing this in the tunnel create
+#    # if gre enabled, gretap needs to be attached to bridge
+#    [ $subGreEnabled = true ] && { \
+#      ip netns exec $sscSn brctl addif $sscIf gretap1;\
+#      [ $DEBUG = true ] && echo "  GreEnabled: attaching gretap1 to bridge $sscIf";\
+#    }
 
     # request ip address and run test
     [ $DEBUG = true ] && echo "  Switch to newly created namespace $sscSn and connect subscriber"
@@ -420,12 +448,39 @@ subscriber_library()
         exit
         ;;
     esac
+    
+    [ $(ip netns exec $sscSn ip link show | grep gretap1 | wc -l) -gt 0 ] && \
+      isGreSetup=true || isGreSetup=false
+    $DEBUG && echo "  isGreSetup: $isGreSetup"
+
     # entering network namespace
     echo "Entering network namespace $sscSn"
-    echo "Exit via 'exit' and './disconnect.sh'"
+    echo "Exit via 'exit' and './disconnect.sh <subname>'"
     echo ""
+    $isGreSetup && {\
+      echo "##############################################################################";\
+      echo "GRE: Single Subscriber/Service: $sscIf";\
+      echo "  add connections:";\
+      echo "";\
+      echo "  ## multi dwelling units (multiple subs, on quality profile) may use the same ";\
+      echo "  ##  S-VLAN and different C-VLAN ID";\
+      echo "    ip link add link brs7.111 address 02:34:56:76:03:33 name brs7.111.333 type vlan id 333";\
+      echo "    dhclient -4 -v brs7.111.333";\
+      echo "  ";\
+      echo "  ## Single subscribers with multiple service profiles may use different S-VLAN and the";\
+      echo "  ##  same C-VLAN";\
+      echo "    ip link add link brs7 address 02:34:02:22:00:00 name brs7.222 type vlan id 222";\
+      echo "    ip link add link brs7.222 address 02:34:02:22:02:22 name brs7.222.222 type vlan id 222";\
+      echo "    dhclient -4 -v brs7.222.222";\
+      echo "  ";\
+    }
 
-    ip netns exec $sscSn bash --rcfile <(cat ~/.bashrc; echo 'PS1="Namespace > "')
+
+
+    ip netns exec $sscSn bash --rcfile <(\
+      #cat ~/.bashrc; \
+      #echo "cd subscriber"; \
+      echo 'PS1="Namespace > "')
 
   }
 
@@ -487,10 +542,16 @@ subscriber_library()
         ;;
     esac
 
-    #common namespace actions
-    ip netns exec $ssrSn ip link del dev $ssrIf
+    # we only remove netns, if this is not a gre tunnel configuration. 
+    # netns gets delete in the tunnel remove
+    [ $(ip netns exec $ssrSn ip link show | grep gretap | wc -l) -gt 0 ] && \
+      isGreSetup=true || isGreSetup=false
 
-		ip netns del $ssrSn
+    if [ $isGreSetup = false ]; then
+      ip netns exec $ssrSn ip link del dev $ssrIf
+		  ip netns del $ssrSn
+    fi
+
 
     #[ $(echo $subInterface | grep "\." | wc -l) -gt 0 ] && isVlanIf=true || isVlanIf=false
     #[ $DEBUG = true ] && echo "    Vlan check, isVlanIf=$isVlanIf"

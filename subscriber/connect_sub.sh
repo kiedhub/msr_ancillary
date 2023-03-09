@@ -65,7 +65,7 @@ subGreInterfaceIp=$gsGreInterfaceIp
 subGreRemInterfaceIp=$gsGreRemInterfaceIp
 subGreTunnelEndpoint=$gsGreTunnelEndpoint
 
-subGreTunnelConf="$subName $subGreInterface $subGreInterfaceIp $subGreRemInterfaceIp $subGreTunnelEndpoint"
+subGreTunnelConf="$subName $subGreInterface $subGreInterfaceIp $subGreRemInterfaceIp $subGreTunnelEndpoint $subInterface"
 
 while getopts ":i:t:h:l:I:R:r:" option; do
   case $option in
@@ -101,15 +101,9 @@ done
 # set up gre tunnel
 $subGreEnabled && echo "Setting up GRE Tunnel"; subscriber_gretunnel_create $subGreTunnelConf
 
-#ip netns exec $subName bash --rcfile <(cat ~/.bashrc; echo 'PS1="IP Namespace > "')
-# test-stop
-exit
-
-#create_vlan_interface $subInterface
 subscriber_session_create $subInterface $subName $subAccessProto
 
 exit
-
 
 
 ## what's the below??? -> doesn't seem to be required anymore
