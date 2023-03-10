@@ -25,6 +25,10 @@ subName=$1
 
 subscriber_session_remove $subName
 
+[ -e $SUB_SCRIPT_DIR/.$subName-gre.cfg ] && \
+  subscriber_gretunnel_remove $subName || \
+  echo "No GRE configuration file, no tunnel to be removed" 
+
 exit
 
 

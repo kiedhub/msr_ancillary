@@ -265,14 +265,14 @@ commons_library()
     [ $DEBUG = true ] && echo "  VLAN check OK, isNestedVlan: $isNestedVlan"
 
     [ $vlanOfType = "single" ] && { \
-      vid_to_lamac $vid
+      vid_to_lamac $vid;\
       [ $DEBUG = true ] && echo "  802.1Q VLAN (isNestedVlan=$isNestedVlan)";\
       sudo ip link add link $ifId address $laMac name $vlanInterface type vlan id $vid;\
       [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -lt 1 ] && { \
         echo "create_vlan_interface: Failed creating vlan interface $vlanInterface, exiting";\
         exit;\
       } || { \
-        [ $DEBUG = true ] && echo "  Brining up interfaces $ifId and $vlanInterface";\
+        [ $DEBUG = true ] && echo "  Bringing up interfaces $ifId and $vlanInterface";\
         if_up $ifId;\
         if_up $vlanInterface;\
       };\
@@ -306,6 +306,94 @@ commons_library()
     }
   }
 
+  create_vlan_interface_in_netns()
+  {
+    # creates a vlan interface in a network namespace
+    # requires interface name (of type br1.100.200) and network namespace name
+
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
+    vlanInterface=$1
+    nsName=$2
+    [ $DEBUG = true ] && echo "  vlanInterface: $vlanInterface nsName: $nsName"
+
+    # sets sVid/cVid or vid, isNetedVlan and ifId
+    check_vlan $vlanInterface
+
+    # check if parent is a bridge and whether it exists; if bridge, create if not exist
+    if [ $(echo "$ifId" | grep -e '^br.*' | wc -l) -eq 1 ]; then 
+      isBridge=true || isBridge=false
+
+      if [ $isBridge = true ]; then 
+        [ $(ip netns exec $nsName brctl show | grep $ifId | wc -l) -eq 1 ] && \
+          bridgeExist=true || bridgeExist=false
+      fi
+
+      $DEBUG && echo "  isBridge: $isBridge  bridgeExist: $bridgeExist"
+
+      if [ $bridgeExist = false ]; then
+        ip netns exec $nsName brctl addbr $ifId
+        $DEBUG && echo "  netns($nsName): creating bridge $ifId"
+      fi
+    fi
+
+    # parent interface may be down after reboot, so let's check and bring it up
+    $DEBUG && echo "  netns($nsName): bring up parent if: $ifId"
+    ip netns exec $nsName ip link set $ifId up
+    #if_up $ifId
+    
+    [ $isVlanIf = false ] && { echo "No VLAN interface, nothing to do"; return; }
+    [ $(sudo ip netns exec $nsName ip link show | grep $vlanInterface | wc -l) -gt 0 ] && { \
+      echo "VLAN interfce \"$vlanInterface\" already exists, nothing to do";\
+      return;\
+    }
+
+    $DEBUG && echo "  VLAN check OK, isNestedVlan: $isNestedVlan"
+
+    [ $vlanOfType = "single" ] && { \
+      vid_to_lamac $vid;\
+      $DEBUG && echo "  802.1Q VLAN (isNestedVlan=$isNestedVlan)";\
+      sudo ip netns exec $nsName ip link add link $ifId address $laMac name $vlanInterface type vlan id $vid;\
+      [ $(sudo ip netns exec $nsName ip link show | grep "$vlanInterface" | wc -l) -lt 1 ] && { \
+        echo "  netns($nsName): create_vlan_interface: Failed creating vlan interface $vlanInterface, exiting";\
+        exit;\
+      } || { \
+        $DEBUG && echo "  netns($nsName): Bringing up interfaces $ifId and $vlanInterface";\
+        ip netns exec $nsName ip link set $ifId up;\
+        ip netns exec $nsName ip link set $vlanInterface up;\
+      };\
+    }
+    
+    [ $vlanOfType = "double" ] && { \
+      vid_to_lamac $sVid;\
+      sLaMac=$laMac;\
+      vid_to_lamac $cVid;\
+      cLaMac=$laMac;\
+      [ $DEBUG = true ] && echo "  QinQ VLAN (double tagged)";\
+      [ $DEBUG = true ] && echo "    netns($nsName): Creating link";\
+      [ $DEBUG = true ] && echo "    ifId: $ifId, sLaMac: $sLaMac, cLaMac: $cLaMac, vlanInterface: $vlanInterface, vid: $sVid.$cVid";\
+
+      # create svlan interface
+      ! [ $(ip netns exec $nsName ip link show | grep "$ifId.$sVid" | wc -l) -gt 0 ] && { \
+        $DEBUG = true && echo "  netns($nsName): Creating interface $ifId.$svid";\
+        sudo ip netns exec $nsName ip link add link $ifId address $sLaMac name $ifId.$sVid type vlan id $sVid;\
+        sudo ip netns exec $nsName ip link set $ifId.$sVid up;\
+        ! [ $(ip netns exec $nsName ip link show | grep "$ifId.$sVid" | wc -l) -gt 0 ] && { \
+          echo "Failed creating interface $ifId.$sVid, exiting";\
+          exit; };\
+      }
+      # create cvlan interface
+      ! [ $(ip netns exec $nsName ip link show | grep "$ifId.$sVid.$cVid" | wc -l) -gt 0 ] && { \
+        $DEBUG = true && echo "  Creating interface $ifId.$sVid.$cVid using MAC $cLaMac";\
+        sudo ip netns exec $nsName ip link add link $ifId.$sVid address $cLaMac name $ifId.$sVid.$cVid type vlan id $cVid;\
+        sudo ip netns exec $nsName ip link set $ifId.$sVid.$cVid up;\
+        ! [ $(ip netns exec $nsName ip link show | grep "$ifId.$sVid.$cVid" | wc -l) -gt 0 ] && { \
+          echo "  netns($nsName): Failed creating interface $ifId.$sVid.$cVid, exiting";\
+          exit;\
+        };\
+      };\
+    }
+  }
+
   delete_vlan_interface()
   {
     [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
@@ -319,6 +407,42 @@ commons_library()
       [ $(sudo ip link show | grep "$vlanInterface" | wc -l) -gt 0 ] && \
         echo "  Failed deleting interface $vlanInterface";\
     }
+  }
+
+  delete_vlan_interface_in_netns()
+  {
+    # deletes a vlan interface inside a network namespace
+    # requires interface name and network namespace name
+
+    $DEBUG && echo "  ${FUNCNAME[0]}"
+    vlanInterface=$1
+    nsName=$2
+
+    # sets sVid/cVid or vid, isNetedVlan and ifId
+    check_vlan $vlanInterface
+
+    [ $(sudo ip netns exec $nsName ip link show | grep "$vlanInterface" | wc -l) -gt 0 ] && {\
+      sudo ip netns exec $nsName ip link delete $vlanInterface;\
+      [ $(sudo ip netns exec §nsName ip link show | grep "$vlanInterface" | wc -l) -gt 0 ] && \
+        echo "  netns($nsName): Failed deleting interface $vlanInterface";\
+    }
+    # if the parent is a bridge, we delete this as well
+    if [ $(echo "$ifId" | grep -e '^br.*' | wc -l) -eq 1 ]; then 
+      isBridge=true || isBridge=false
+
+      if [ $isBridge = true ]; then 
+        [ $(ip netns exec $nsName brctl show | grep $ifId | wc -l) -eq 1 ] && \
+          bridgeExist=true || bridgeExist=false
+      fi
+
+      $DEBUG && echo "  isBridge: $isBridge  bridgeExist: $bridgeExist"
+
+      if [ $bridgeExist = true ]; then
+        ip netns exec $nsName brctl delbr $ifId
+        $DEBUG && echo "  netns($nsName): deleting bridge $ifId"
+      fi
+    fi
+
   }
 
   ipv4_to_lamac()
