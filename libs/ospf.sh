@@ -19,15 +19,23 @@ ospf_library()
     [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     ospf1BS=$(echo $ospf1BridgeSubnet | sed -e "s.\/.\\\/.g")
     ospf1v6BS=$(echo $ospf1v6BridgeSubnet | sed -e "s.\/.\\\/.g" )
+    ospf2BS=$(echo $ospf2BridgeSubnet | sed -e "s.\/.\\\/.g")
+    ospf2v6BS=$(echo $ospf2v6BridgeSubnet | sed -e "s.\/.\\\/.g" )
     [ $DEBUG = true ] && echo "    ospf1BS: $ospf1BS"
     [ $DEBUG = true ] && echo "    ospf1v6BS: $ospf1v6BS"
+    [ $DEBUG = true ] && echo "    ospf2BS: $ospf2BS"
+    [ $DEBUG = true ] && echo "    ospf2v6BS: $ospf2v6BS"
   
     cat $composeSampleFile | \
     sed -e "s/\$ospf1IpAddress/$ospf1IpAddress/g" \
-      -e "s/\$ospf1BridgeName/$ospf1BridgeName/g" \
+      -e "s/\$ospf1Ipv6Address/$ospf1Ipv6Address/g" \
+      -e "s/\$ospf1BridgeName/$ospf1BridgeName/g" | \
+    sed -e "s/\$ospf2IpAddress/$ospf2IpAddress/g" \
+      -e "s/\$ospf2Ipv6Address/$ospf2Ipv6Address/g" \
       -e "s/\$ospf2BridgeName/$ospf2BridgeName/g" | \
     sed -e "s/\$ospf1BridgeSubnet/$ospf1BS/g"  \
-      -e "s/\$ospf1Ipv6Address/$ospf1Ipv6Address/g" \
+      -e "s/\$ospf2BridgeSubnet/$ospf2BS/g"  \
+      -e "s/\$ospf2v6BridgeSubnet/$ospf2v6BS/g" \
       -e "s/\$ospf1v6BridgeSubnet/$ospf1v6BS/g"  > $composeDestFile
 
     [ $DEBUG = true ] && echo "    created compose file $composeDestFile"
