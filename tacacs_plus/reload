@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="tacplus"
+
+# grab configuration
+TACP_SOURCE=${BASH_SOURCE[0]}
+TACP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. $TACP_SCRIPT_DIR/../functions.sh
+
+cd $TACP_SCRIPT_DIR
+
+
+. $TACP_SCRIPT_DIR/down
+. $TACP_SCRIPT_DIR/up
+
+contId=$(sudo docker ps | grep "tac_plus" | awk '{ print $1 }')
+
+sudo docker logs $contId -f
+
+exit
+
+
+
+
+
+
+SERVICE_LIBRARY="tacplus"
+
+# grab configuration
+TACP_SOURCE=${BASH_SOURCE[0]}
+TACP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. $TACP_SCRIPT_DIR/../functions.sh
+
+cd $TACP_SCRIPT_DIR
+
+# overwrite any eventually changed configuration
+source $TACP_SCRIPT_DIR/running.conf
+
+#detach_bridge_interface
+compose_down $SERVICE_LIBRARY
+rm_running_config

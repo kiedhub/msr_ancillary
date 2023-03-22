@@ -1,0 +1,45 @@
+frr version 8.4_git
+frr defaults traditional
+hostname ospf10
+!
+interface eth0
+ description "to system-under-test"
+ ip address 192.168.30.10/192.168.30.10Prefix 
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 2 md5 casa
+exit
+!
+interface eth1
+ description "to router ospf30"
+ ip address 11.0.10.10/24
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 2 md5 casa
+exit
+!
+interface lo10
+ ip address 10.255.253.10/32
+exit
+!
+router ospf
+ ospf router-id 10.255.253.10
+ redistribute connected
+ network 10.255.253.10/32 area 0.0.0.0
+ network 11.0.10.0/24 area 0.0.0.0
+ network $ospf1BridgeSubnet area 0.0.0.0
+ area 0.0.0.0 authentication message-digest
+exit
+!
+mpls ldp
+ router-id 10.255.253.10
+ neighbor 10.255.253.30 password casa
+ !
+ address-family ipv4
+  discovery transport-address 10.255.253.10
+  !
+  interface eth1
+  exit
+  !
+ exit-address-family
+ !
+exit
+!

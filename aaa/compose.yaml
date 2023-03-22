@@ -1,0 +1,50 @@
+version: '3'
+
+#- /home/ralf/docker/bird-routing/bgp_sample/volumes:/tmp/volumes:ro
+# sudo docker run -d  -p 55022:22 --name bird1 bird
+services:
+  aaa1:
+    image: rsattler/aaa-server 
+    ports:
+      - "57000:22"
+    networks:
+      rad_net:
+        ipv4_address: 172.16.1.13
+    volumes:
+      - ./volumes/log/:/var/log/radius/
+      - ./volumes/customize/:/usr/local/etc/radius/
+    cap_add:
+      - NET_ADMIN
+  aaa2:
+    image: rsattler/aaa-server 
+    ports:
+      - "57001:22"
+    networks:
+      rad_net:
+        ipv4_address: 172.16.1.3
+    volumes:
+      - ./volumes/log/:/var/log/radius/
+      - ./volumes/customize/:/usr/local/etc/radius/
+    cap_add:
+      - NET_ADMIN
+  aaa_client:
+    image: rsattler/aaa-server 
+    ports:
+      - "57002:22"
+    networks:
+      rad_net:
+        ipv4_address: 172.16.1.4
+    volumes:
+      - ./volumes/customize/aaa_client/:/usr/local/etc/radius/
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  rad_net:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: aaa
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.1.0/24

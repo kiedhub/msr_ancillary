@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="aaa"
+DEBUG=true
+
+# grab configuration
+AAA_SOURCE=${BASH_SOURCE[0]}
+AAA_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+AAA_CUSTOM_DIR="$AAA_SCRIPT_DIR/volumes/customize"
+AAA_TESTRUN_DIR="$AAA_SCRIPT_DIR/volumes/customize/aaa_client/testing"
+
+. $AAA_SCRIPT_DIR/../functions.sh
+#echo "NAS IP: $aaaNasIpAddress"
+#exit
+
+client_ip="$aaaNasIpAddress"
+file_name="detail-$(date +%Y%m%d)"
+
+sudo tail -Fn100 ./volumes/log/radacct/$client_ip/$file_name
+
+

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+###!!! TO BE TESTED !!!###
+
+# configure users or clients
+conf_file=$1
+
+usage()
+{
+  echo "AAA deployment configuration"
+  echo "  usage: ./configure <config-file>"
+  echo "  config-file being one of \"users\" or \"clients\""
+  echo "  example: ./configure users"
+  echo
+}
+
+
+[ $# -lt 1 ] && { echo "Missing conf-file parameter!" ; usage; exit; }
+[ $# -gt 1 ] && { echo "Too many paramters!" ; usage; exit; }
+[ ! $conf_file = "users" ] && [ ! $conf_file = "clients"  ] && { echo "No configuration file \"$conf_file\""; usage; exit; }
+
+
+if [ $conf_file == "users" ];then
+  sudo vi ./volumes/customize/authorize
+elif [ $conf_file == "clients" ];then
+  sudo vi ./volumes/customize/clients.conf
+fi

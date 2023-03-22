@@ -1,0 +1,6 @@
+A couple of users are added in /etc/ppp/peers/dsl-provider and their passwords set in
+/etc/ppp/chap-secrets.
+This needs to be added when building the aaa container or added/removed dynamically (preferred)
+when starting a subscriber session
+User profiles are added in ./volumes/customize/authorize_template. This can be arranged a bit 
+according to multiple use/test cases.

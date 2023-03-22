@@ -1,0 +1,128 @@
+version: '3.3'
+
+#- /home/ralf/docker/bird-routing/bgp_sample/volumes:/tmp/volumes:ro
+# sudo docker run -d  -p 55022:22 --name bird1 bird
+services:
+  ospf1:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55056:22"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+    networks:
+      msr_ospf1:
+        ipv4_address: $ospf1IpAddress
+        ipv6_address: $ospf1Ipv6Address
+      ospf1_ospf3:
+        ipv4_address: 11.0.1.10
+        ipv6_address: fd00::11:0:1:10
+    volumes:
+      - ./customize/ospf1:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+  ospf2:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55057:22"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+    networks:
+      msr_ospf2:
+        ipv4_address: $ospf2IpAddress
+        ipv6_address: $ospf2Ipv6Address
+      ospf2_ospf3:
+        ipv4_address: 11.0.2.40
+        ipv6_address: fd00::11:0:2:40
+    volumes:
+      - ./customize/ospf2:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+  ospf3:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55058:22"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+    networks:
+      ospf1_ospf3:
+        ipv4_address: 11.0.1.50
+        ipv6_address: fd00::11:0:1:50
+      ospf2_ospf3:
+        ipv4_address: 11.0.2.50
+        ipv6_address: fd00::11:0:2:40
+      ospf3_dn:
+        ipv4_address: 11.20.0.50
+        ipv6_address: fd00::11:20:0:50
+    volumes:
+      - ./customize/ospf3:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+  dn:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55059:22"
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    networks:
+      ospf3_dn:
+        ipv4_address: 11.20.0.30
+        ipv6_address: fd00::11:20:0:30
+    volumes:
+      - ./customize/dn:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  msr_ospf1:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: $ospf1BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: $ospf1BridgeSubnet
+        - subnet: $ospf1v6BridgeSubnet
+  msr_ospf2:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: $ospf2BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: $ospf2BridgeSubnet
+        - subnet: $ospf2v6BridgeSubnet
+  ospf1_ospf3:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: "ospf1_ospf3"
+    ipam:
+      driver: default
+      config:
+        - subnet: 11.0.1.0/24
+        - subnet: $ospf2v6BridgeSubnet
+  ospf2_ospf3:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: "ospf2_ospf3"
+    ipam:
+      driver: default
+      config:
+        - subnet: 11.0.2.0/24
+        - subnet: $ospf2v6BridgeSubnet
+  ospf3_dn:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: "ospf3_dn"
+    ipam:
+      driver: default
+      config:
+        - subnet: 11.20.0.0/24
+        - subnet: fd00::11:20:0:0/112

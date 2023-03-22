@@ -1,0 +1,21 @@
+#!/usr/bin/env ash
+
+echo "--- Start init-functions"
+
+# docker container customization
+
+# load configuration
+source /tmp/config
+
+# setup loopback interface
+ip link add name $lo_name type dummy
+ip addr add $lo_ip dev $lo_name
+#ip link set name $lo_name up
+
+# set default route via ospf30
+echo "    changing default route ..."
+ip route del default
+ip route add default via $gw dev eth0
+echo "    $(ip route)"
+
+echo "--- End init-functions"

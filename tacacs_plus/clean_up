@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="tacplus"
+DEBUG=true
+
+# grab configuration
+TACP_SOURCE=${BASH_SOURCE[0]}
+TACP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. $TACP_SCRIPT_DIR/../functions.sh
+
+cd $TACP_SCRIPT_DIR
+
+clean_up_directory

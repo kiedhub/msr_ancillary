@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="aaa"
+DEBUG=true
+
+# grab configuration
+AAA_SOURCE=${BASH_SOURCE[0]}
+AAA_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+AAA_CUSTOM_DIR="$AAA_SCRIPT_DIR/volumes/customize"
+AAA_TESTRUN_DIR="$AAA_SCRIPT_DIR/volumes/customize/aaa_client/testing"
+
+. $AAA_SCRIPT_DIR/../functions.sh
+
+cd $AAA_SCRIPT_DIR
+
+composeSampleFile="$AAA_SCRIPT_DIR/compose_sample.yaml"
+composeDestFile="$AAA_SCRIPT_DIR/compose.yaml"
+authTemplFile="$AAA_CUSTOM_DIR/authorize_template"
+authDestFile="$AAA_CUSTOM_DIR/authorize"
+clientsTemplFile="$AAA_CUSTOM_DIR/clients_template.conf"
+clientsDestFile="$AAA_CUSTOM_DIR/clients.conf"
+testrunTemplFile="$AAA_TESTRUN_DIR/testrun_templ"
+testrunDestFile="$AAA_TESTRUN_DIR/testrun"
+
+#echo "Src $composeSampleFile Dst $composeDestFile"
+
+build_compose_file
+build_configuration
+compose_up $SERVICE_LIBRARY 
+attach_bridge_interface
+write_running_config

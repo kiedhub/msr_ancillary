@@ -1,0 +1,11 @@
+[
+  {
+    "id": 1,
+    "name":"MSR Demo Speedtest Backend",
+    "server":"http://100.80.0.2/",
+    "dlURL":"backend/garbage.php",
+    "ulURL":"backend/empty.php",
+    "pingURL":"backend/empty.php",
+    "getIpURL":"backend/getIP.php"
+  }
+]

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="speedtest"
+
+# grab configuration
+ST_SOURCE=${BASH_SOURCE[0]}
+ST_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#source $ST_SCRIPT_DIR/../ancillary.conf
+. $ST_SCRIPT_DIR/../functions.sh
+
+cd $ST_SCRIPT_DIR
+
+# overwrite any eventually changed configuration
+source $ST_SCRIPT_DIR/running.conf
+
+detach_bridge_interface
+compose_down $SERVICE_LIBRARY
+remove_running_conf_file
+
+#sudo docker-compose -p speedtest -f compose.yaml down

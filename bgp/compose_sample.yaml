@@ -1,0 +1,99 @@
+version: '3'
+
+#- /home/ralf/docker/bird-routing/bgp_sample/volumes:/tmp/volumes:ro
+# sudo docker run -d  -p 55022:22 --name bird1 bird
+services:
+  isp1:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55052:22"
+    networks:
+      msr_isp1:
+        ipv4_address: $bgp1IpAddress
+      isp1_isp3:
+        ipv4_address: 10.0.1.5
+    volumes:
+      - ./customize/isp1:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+  isp2:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55053:22"
+    networks:
+      msr_isp2:
+        ipv4_address: $bgp2IpAddress
+      isp2_isp3:
+        ipv4_address: 10.0.2.2
+    volumes:
+      - ./customize/isp2:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+  isp3:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55054:22"
+    networks:
+      isp1_isp3:
+        ipv4_address: 10.0.1.3
+      isp2_isp3:
+        ipv4_address: 10.0.2.3
+      isp3_dn:
+        ipv4_address: 10.20.0.3
+    volumes:
+      - ./customize/isp3:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+  dn:
+    image: rsattler/bgp-router:1.0
+    ports:
+      - "55055:22"
+    networks:
+      isp3_dn:
+        ipv4_address: 10.20.0.30
+    volumes:
+      - ./customize/dn:/tmp/customize:ro
+    cap_add:
+      - NET_ADMIN
+
+networks:
+  msr_isp1:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: $bgp1BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: $bgp1BridgeSubnet
+  msr_isp2:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: $bgp2BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: $bgp2BridgeSubnet
+  isp1_isp3:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: $bgp3BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.1.0/24
+  isp2_isp3:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: $bgp4BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.2.0/24
+  isp3_dn:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: $bgp5BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.20.0.0/24

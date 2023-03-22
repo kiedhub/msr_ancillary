@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="aaa"
+
+# grab configuration
+AAA_SOURCE=${BASH_SOURCE[0]}
+AAA_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+#source $AAA_SCRIPT_DIR/../ancillary.conf
+. $AAA_SCRIPT_DIR/../functions.sh
+
+cd $AAA_SCRIPT_DIR
+
+clean_up_directory
+
+#
+## configure users or clients
+#echo "Cleaning up configuration ..."
+#
+#echo "Re-setting ownership to $USER:$USER"
+#sudo chown -R $USER:$USER ./volumes
+#
+#echo "Deleting log files"
+#sudo rm -r ./volumes/log/*
