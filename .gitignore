@@ -1,2 +1,9 @@
 #.gitignore
 ancillary.conf
+
+aaa/running.conf
+aaa/volumes/log/
+#speedtest/.gitignore
+speedtest/running.conf
+subscriber/.Sub*
+
