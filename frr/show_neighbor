@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+[ $# -eq 0 ] && serviceName="ospf10" || serviceName="$1"
+
+echo ""
+echo "######## ospf neighbors of $serviceName"
+docker exec -it $serviceName ash -c "vtysh -c 'show ip ospf neighbor'"
+
+echo "######## mpls ldp neighbors of $serviceName"
+docker exec -it $serviceName ash -c "vtysh -c 'show mpls ldp neighbor'"

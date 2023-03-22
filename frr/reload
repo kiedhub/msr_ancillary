@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+[ $# -eq 0 ] && serviceName="ospf10" || serviceName="$1"
+
+#docker exec -it $serviceName ash -c 'vtysh -f /etc/frr/frr.conf'
+docker exec -it $serviceName ash -c '/etc/init.d/frr restart'
+
+
+#element=$1
+#
+#if [ $element == "all" ];then
+#  element=casa
+#  cont_name=$(sudo docker ps -a |grep -o [a-zA-Z0-9_]*$element[a-zA-Z0-9_]*)
+#  sudo docker exec -it $cont_name /bin/ash -c "birdc configure"
+#  element="isp1"
+#  cont_name=$(sudo docker ps -a |grep -o [a-zA-Z0-9_]*$element[a-zA-Z0-9_]*)
+#  sudo docker exec -it $cont_name /bin/ash -c "birdc configure"
+#  element="isp2"
+#  cont_name=$(sudo docker ps -a |grep -o [a-zA-Z0-9_]*$element[a-zA-Z0-9_]*)
+#  sudo docker exec -it $cont_name /bin/ash -c "birdc configure"
+#  element="isp3"
+#  cont_name=$(sudo docker ps -a |grep -o [a-zA-Z0-9_]*$element[a-zA-Z0-9_]*)
+#  sudo docker exec -it $cont_name /bin/ash -c "birdc configure"
+#else
+#  cont_name=$(sudo docker ps -a |grep -o [a-zA-Z0-9_]*$element[a-zA-Z0-9_]*)
+#  
+#  # reload bird configuration
+#  sudo docker exec -it $cont_name /bin/ash -c "birdc configure && birdc show protocol"
+#  
+#  # show protocol configuration
+#  #sudo docker exec -it bird_rg_1 /bin/ash -c "birdc show protocol all"
+#fi
+#

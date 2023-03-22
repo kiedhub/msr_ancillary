@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-sudo docker exec -it radius_aaa_client_1 /bin/ash -c "/usr/local/etc/radius/testing/testrun"
-
-
