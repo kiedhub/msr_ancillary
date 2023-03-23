@@ -50,8 +50,12 @@ ospf_library()
     find $OSPF_SCRIPT_DIR/volumes/* -type d | grep -e "frr$" | \
       while IFS= read -r d; do 
         # backup old config file first
-        t_stamp=$(date +"%h-%d-%H:%M:%S")
-        cp $d/frr.conf $d/../backup_configs/frr.conf.$t_stamp
+        if [ -e $d/frr.conf ]; then
+          t_stamp=$(date +"%h-%d-%H:%M:%S")
+          cp $d/frr.conf $d/../backup_configs/frr.conf.$t_stamp
+        else 
+          echo "    ${FUNCNAME[0]}: $d/frr.conf doesn't exist, can't backup"
+        fi
         #ls $d/../backup_configs
         [ $DEBUG = true ] && echo "    ${FUNCNAME[0]}: writing new configuration file based on template 'frr_sample.conf'"
         # create new config file
