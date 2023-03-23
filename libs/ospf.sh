@@ -59,7 +59,7 @@ ospf_library()
         #ls $d/../backup_configs
         [ $DEBUG = true ] && echo "    ${FUNCNAME[0]}: writing new configuration file based on template 'frr_sample.conf'"
         # create new config file
-        echo "Directory d: $d"
+        echo "    Directory d: $d"
         cat $d/frr_sample.conf | \
           sed -e "s/\$ospf1IpAddress/$ospf1IpAddress/g" \
               -e "s/\$ospf1Ipv6Address/$ospf1Ipv6Address/g" \
