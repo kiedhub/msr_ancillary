@@ -15,9 +15,9 @@ services:
         ipv4_address: 11.0.10.10
         ipv6_address: fd00::11:0:10:10
     volumes:
-      - ./customize/ospf10/frr:/etc/frr:rw
-      - ./customize/ospf10/init-functions:/lib/lsb/init-functions
-      - ./customize/ospf10/config:/tmp/config:ro
+      - ./volumes/ospf10/frr:/etc/frr:rw
+      - ./volumes/ospf10/init-functions:/lib/lsb/init-functions
+      - ./volumes/ospf10/config:/tmp/config:ro
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -36,9 +36,9 @@ services:
         ipv4_address: 11.0.20.20
         ipv6_address: fd00::11:0:20:20
     volumes:
-      - ./customize/ospf20/frr:/etc/frr/:rw
-      - ./customize/ospf20/init-functions:/lib/lsb/init-functions
-      - ./customize/ospf20/config:/tmp/config:ro
+      - ./volumes/ospf20/frr:/etc/frr/:rw
+      - ./volumes/ospf20/init-functions:/lib/lsb/init-functions
+      - ./volumes/ospf20/config:/tmp/config:ro
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -60,10 +60,10 @@ services:
         ipv4_address: 13.20.0.30
         ipv6_address: fd00::13:20:0:30
     volumes:
-      - ./customize/ospf30/frr/:/etc/frr/:rw
-      - ./customize/ospf30/init-functions:/lib/lsb/init-functions
-      - ./customize/ospf30/config:/tmp/config:ro
-        #- ./customize/ospf30/frr.conf:/etc/frr/frr.conf
+      - ./volumes/ospf30/frr/:/etc/frr/:rw
+      - ./volumes/ospf30/init-functions:/lib/lsb/init-functions
+      - ./volumes/ospf30/config:/tmp/config:ro
+        #- ./volumes/ospf30/frr.conf:/etc/frr/frr.conf
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -78,8 +78,8 @@ services:
         ipv4_address: 13.20.0.111
         ipv6_address: fd00::11:20:0:111
     volumes:
-      - ./customize/dn/init-functions:/lib/lsb/init-functions
-      - ./customize/dn/config:/tmp/config:ro
+      - ./volumes/dn/init-functions:/lib/lsb/init-functions
+      - ./volumes/dn/config:/tmp/config:ro
     cap_add:
       - NET_ADMIN
       - CAP_SYS_ADMIN

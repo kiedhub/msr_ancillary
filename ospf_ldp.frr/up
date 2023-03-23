@@ -72,41 +72,13 @@ if $enableMplsLdp; then
 fi
 
 exit
+
+# followint is from prev ospf impl and may be useful when adding ipv6 support
+# was implemented before compose_up
+
 # need to get ipv6 address configuration into the container. Docker compose doesn't
 # seem to work
-cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/customize/ospf1/running.conf
-cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/customize/ospf2/running.conf
-cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/customize/ospf3/running.conf
-cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/customize/dn/running.conf
-
-compose_up $SERVICE_LIBRARY 
-bridge_interface attach $bridge1Interface $bridge1Name
-bridge_interface attach $bridge2Interface $bridge2Name
-
-exit
-
-# some routes for static testing
-# should not be issued when testing bgp
-get_container_id()
-{
-  routerId=$1
-
-  contId=$(sudo docker ps |grep $routerId | awk '{ print $1 }')
-
-#  echo "sudo docker exec -it $contId sh -c 'ip route add $destIp via $gateway'"
-#  sudo docker exec -it $contId sh -c "'ip route add $destIp via $gateway'"
-#  sudo docker exec -it $contId sh -c 'ip route '
-}
-
-get_container_id isp1
-sudo docker exec -it $contId sh -c 'ip route add 100.70.0.0/16 via 192.168.1.20'
-sudo docker exec -it $contId sh -c 'ip route add 100.80.0.0/16 via 192.168.1.20'
-sudo docker exec -it $contId sh -c 'ip route'
-
-get_container_id isp2
-sudo docker exec -it $contId sh -c 'ip route add 100.70.0.0/16 via 192.168.2.20'
-sudo docker exec -it $contId sh -c 'ip route add 100.80.0.0/16 via 192.168.2.20'
-sudo docker exec -it $contId sh -c 'ip route'
-
-
-
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf1/running.conf
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf2/running.conf
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf3/running.conf
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/dn/running.conf
