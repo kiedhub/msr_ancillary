@@ -1,12 +1,13 @@
-customize/ospf10/backup_configs/*
+customize/ospf10/backup_configs/frr*
 customize/ospf10/frr/frr.conf    
 customize/ospf10/frr/frr.conf.sav
 
-customize/ospf20/backup_configs/*
+customize/ospf20/backup_configs/frr*
+!customize/ospf20/backup_configs/README.txt
 customize/ospf20/frr/frr.conf    
 customize/ospf20/frr/frr.conf.sav
 
-customize/ospf30/backup_configs/*
+customize/ospf30/backup_configs/frr*
 customize/ospf30/frr/frr.conf    
 customize/ospf30/frr/frr.conf.sav
 
