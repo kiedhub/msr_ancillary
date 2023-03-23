@@ -12,6 +12,70 @@ commons_library()
 
   [ $DEBUG = true ] && echo "${FUNCNAME[0]}"
 
+  load_kernel_module()
+  {
+    # checks if a kernel module is loaded and loads it if not
+    # requires module name as $1
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} $1"
+
+    modName=$1
+
+    [ $(lsmod | grep $modName | wc -l) -gt 0 ] && isLoaded=true || isLoaded=false
+    $DEBUG && echo "  $modName isLoaded = $isLoaded" 
+
+    ! $isLoaded && modprobe $modName || \
+      echo "  ${FUNCNAME[0]}: Module '$modName' already loaded, nothing to do."
+
+    # verify it got loaded, exit if not
+    if [ $(lsmod | grep $modName | wc -l) -eq 0 ]; then
+      echo "  ${FUNCNAME[0]}: ERR: Failed to load module '$modName'" 
+      exit 0
+    fi
+  }
+
+  enable_mpls_kernel()
+  {
+    load_kernel_module mpls_router
+    load_kernel_module mpls_gso
+    load_kernel_module mpls_iptunnel
+
+    if [ ! -d /proc/sys/net/mpls ]; then
+      echo "  ${FUNCNAME[0]}: ERR: Missing directory '/proc/sys/net/mpls'"
+      echo "                       mpls not enabled correctly, exiting"
+      exit0
+    fi
+
+    if [ $(cat /proc/sys/net/mpls/platform_labels) != "1048575" ]; then
+      sysctl -w net.mpls.platform_labels=1048575
+      $DEBUG && echo "  ${FUNCNAME[0]}: setting net.mpls.platform_labels to 1048575"
+    else
+      $DEBUG && echo "  ${FUNCNAME[0]}: net.mpls.platform_labels already set to 1048575"
+    fi
+  }
+
+  enable_mpls_if()
+  {
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} $1"
+    eplIf=$1
+
+    #load_kernel_module mpls_router
+    #load_kernel_module mpls_gso
+    #load_kernel_module mpls_iptunnel
+
+    #if [ ! -d /proc/sys/net/mpls ]; then
+    #  echo "  ${FUNCNAME[0]}: ERR: Missing directory '/proc/sys/net/mpdls'"
+    #  echo "                       mpls not enabled correctly, exiting"
+    #  exit0
+    #fi
+
+    if [ ! -d /proc/sys/net/mpls/conf/$eplIf ]; then
+      echo "  ${FUNCNAME[0]}: WARNING: mpls interface dir '/proc/sys/net/mpls/conf/$eplIf' does not exist"
+      echo "                           can't enable mpls on interface $eplIf"
+    else 
+      sysctl -w net/mpls/conf/$eplIf/input=1
+    fi
+  }
+
   prefix_from_cidr()
   {
     # extracts the network prefix from a cidr notation
