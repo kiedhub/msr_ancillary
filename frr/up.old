@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-sudo docker-compose -p frrouter -f compose.yaml up -d

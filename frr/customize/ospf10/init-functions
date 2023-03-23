@@ -10,7 +10,7 @@ source /tmp/config
 # setup loopback interface
 ip link add name $lo_name type dummy
 ip addr add $lo_ip dev $lo_name
-#ip link set name $lo_name up
+ip link set name $lo_name up
 
 hostname $h_name
 

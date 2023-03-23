@@ -11,6 +11,9 @@ OSPF_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && p
 
 cd $OSPF_SCRIPT_DIR
 
+# load kernel modules for mpls
+$enableMplsLdp && enable_mpls_kernel
+
 composeSampleFile="$OSPF_SCRIPT_DIR/compose_sample.yaml"
 composeDestFile="$OSPF_SCRIPT_DIR/compose.yaml"
 
@@ -28,7 +31,6 @@ bridge2Name="$ospf2BridgeName"
 # ospf1BridgeSubnet="192.168.3.0/24"
 
 build_compose_file
-
 # create cidr notation and update config files
 # currently only ospf10 and ospf20 require configs to be updated
 prefix_from_cidr $ospf1BridgeSubnet
@@ -48,6 +50,7 @@ check_prev_config "ospf2IpAddress"
 sameO2Ip=$cpcOldEqNew
 check_prev_config "ospf2BridgeSubnet"
 sameO2Bs=$cpcOldEqNew
+
 # rebuild only if one is not the same
 if ! ( $sameO1Ip && $sameO1Bs && $sameO2Ip && $sameO2Bs ); then
  build_frr_config 
@@ -56,10 +59,17 @@ else
 fi
 
 wr_running_config $OSPF_SCRIPT_DIR
+
 compose_up $SERVICE_LIBRARY 
 
 bridge_interface attach $bridge1Interface $bridge1Name
 bridge_interface attach $bridge2Interface $bridge2Name
+
+# enable mpls on interfaces
+if $enableMplsLdp; then
+  enable_mpls_if $bridge1Interface
+  enable_mpls_if $bridge2Interface
+fi
 
 exit
 # need to get ipv6 address configuration into the container. Docker compose doesn't
