@@ -16,6 +16,6 @@ AAA_TESTRUN_DIR="$AAA_SCRIPT_DIR/volumes/customize/aaa_client/testing"
 client_ip="$aaaNasIpAddress"
 file_name="detail-$(date +%Y%m%d)"
 
-sudo tail -Fn100 ./volumes/log/radacct/$client_ip/$file_name
+sudo tail -Fn1000 ./volumes/log/radacct/$client_ip/$file_name
 
 

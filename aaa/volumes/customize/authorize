@@ -1,12 +1,23 @@
 
 testing Cleartext-Password := "password"
 
+# spirent ipoe sub
+00:10:94:00:00:37 Cleartext-Password := "casaipoe"
+#  Casa-Activate-DT = "30 s_Res_100Mbps"
+
+00:10:94:00:00:38 Cleartext-Password := "casaipoe"
+00:10:94:00:00:39 Cleartext-Password := "casaipoe"
+00:10:94:00:00:40 Cleartext-Password := "casaipoe"
+00:10:94:00:30:58 Cleartext-Password := "casaipoe"
+00:10:94:00:30:59 Cleartext-Password := "casaipoe"
+
 casa Cleartext-Password := "casa"
   Casa-Actual-Data-Rate-Upstream = "10000",
   Casa-Actual-Data-Rate-Downstream = "20000"
 
 #Testcase dynamic-template
-#  Casa-Activate-DT = "30 s_Res_10Mbps"
+casa_dt Cleartext-Password := "casa"
+  Casa-Activate-DT = "30 s_Res_100Mbps"
 
 poc_test_1 Cleartext-Password := "casa"
   Framed-Pool = "casa_v4_test1",
@@ -32,9 +43,9 @@ poc_test_2 Cleartext-Password := "casa"
 #  Casa-Ipv6-Secondary-DNS = "2001:4860:4860::6666"
 
 poc_test_3 Cleartext-Password := "casa"
-  Framed-IP-Address = 100.81.1.200,
+  Framed-IP-Address = 100.80.1.200,
   Framed-IP-Netmask = 255.255.0.0,
-  Casa-Ip-Gateway = 100.81.1.1,
+  Casa-Ip-Gateway = 100.80.1.1,
   Framed-Route = "ip coa-pd route 10.48.10.0/24",
   Delegated-IPv6-Prefix = 2001:1::/64,
   Casa-Primary-DNS = "8.8.8.8",
@@ -42,7 +53,28 @@ poc_test_3 Cleartext-Password := "casa"
   Casa-Ipv6-Primary-DNS = "2001:4860:4860::5555",
   Casa-Ipv6-Secondary-DNS = "2001:4860:4860::6666"
 
-DEFAULT Auth-Type := Accept
+poc_test_4 Cleartext-Password := "casa"
+  Framed-Pool = "pppoev4_private",
+  Delegated-IPv6-Prefix-Pool = "ipv6-pd-pool-mt",
+  Framed-IPv6-Pool = "ipv6-nd-Pool-mt"
+
+poc_test_5 Cleartext-Password := "casa"
+  Framed-IP-Address = 100.80.1.200,
+  Delegated-IPv6-Prefix = 2001:1:2::/64,
+  Session-Timeout := 2419200,
+  Casa-Primary-DNS := '8.8.8.8',
+  Casa-Secondary-DNS := '1.1.1.1'
+
+  #Framed-IPv6-Pool = "ipv6-nd-Pool-mt",
+  #Framed-IPv6-Pool = "ipv6-nd-Pool-mt",
+  #Framed-IP-Netmask = 255.255.0.0,
+  #Casa-Ip-Gateway = 100.80.1.1,
+  #Framed-IPv6-Address := 54::2,
+  #Casa-IPv6-Gateway := 54::1,
+
+
+
+# DEFAULT Auth-Type := Accept
 
   # Casa-Vrf-Name := "test_access"
 
@@ -68,6 +100,12 @@ DEFAULT Auth-Type := Accept
 #
 #	When an authentication request is received from the comm server,
 #	these values are tested. Only the first match is used unless the
+#	"Fall-Through" variable is set to "Yes".
+#
+#	A special user named "DEFAULT" matches on all usernames.
+#	You can have several DEFAULT entries. All entries are processed
+#	in the order they appear in this file. The first entry that
+#	matches the login-request will stop processing unless you use
 #	"Fall-Through" variable is set to "Yes".
 #
 #	A special user named "DEFAULT" matches on all usernames.
@@ -182,12 +220,6 @@ DEFAULT Auth-Type := Accept
 
 #
 # If the user logs in as 'username.shell', then authenticate them
-# using the default method, give them shell access, and stop processing
-# the rest of the file.
-#
-#DEFAULT	Suffix == ".shell"
-#		Service-Type = Login-User,
-#		Login-Service = Telnet,
 #		Login-IP-Host = your.shell.machine
 
 

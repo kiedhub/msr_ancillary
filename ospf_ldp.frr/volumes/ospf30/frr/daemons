@@ -16,7 +16,7 @@
 #
 bgpd=no
 ospfd=yes
-ospf6d=no
+ospf6d=yes
 ripd=no
 ripngd=no
 isisd=no
@@ -28,7 +28,7 @@ eigrpd=no
 babeld=no
 sharpd=no
 pbrd=no
-bfdd=no
+bfdd=yes
 fabricd=no
 vrrpd=no
 pathd=no

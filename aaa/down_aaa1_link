@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+docker exec -it radius_aaa1_1 /bin/ash -c "ip link set dev eth0 down"
+
+exit 1

@@ -78,7 +78,7 @@ exit
 
 # need to get ipv6 address configuration into the container. Docker compose doesn't
 # seem to work
-cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf1/running.conf
-cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf2/running.conf
-cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf3/running.conf
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf10/running.conf
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf20/running.conf
+cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/ospf30/running.conf
 cp $OSPF_SCRIPT_DIR/running.conf $OSPF_SCRIPT_DIR/volumes/dn/running.conf
