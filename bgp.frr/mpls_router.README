@@ -1,0 +1,20 @@
+# Following error hints to missing module
+# For Ubuntu 20.04 this show the solution: https://docs.frrouting.org/projects/dev-guide/en/latest/building-frr-for-ubuntu2004.html#:~:text=Add%20MPLS%20kernel%20modules
+
+# error
+load_kernel_module mpls_router
+  mpls_router isLoaded = false
+modprobe: FATAL: Module mpls_router not found in directory /lib/modules/5.4.0-164-generic
+  load_kernel_module: Module 'mpls_router' already loaded, nothing to do.
+  load_kernel_module: ERR: Failed to load module 'mpls_router'
+
+# install and load modules
+apt-get install linux-modules-extra-`uname -r`
+
+# add following lines to /etc/modules-load.d/modules.conf
+# Load MPLS Kernel Modules
+mpls_router
+mpls_iptunnel
+
+# load modules
+sudo modprobe mpls-router mpls-iptunnel

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="bgp"
+DEBUG=true
+
+# grab configuration
+BGP_SOURCE=${BASH_SOURCE[0]}
+BGP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+. $BGP_SCRIPT_DIR/../functions.sh
+
+cd $BGP_SCRIPT_DIR
+
+# overwrite any eventually changed configuration
+source $BGP_SCRIPT_DIR/running.conf
+
+bridge1Interface="$bgp1Interface.$bgp1InterfaceVlan"
+bridge1Name="$bgp1BridgeName"
+bridge2Interface="$bgp2Interface.$bgp2InterfaceVlan"
+bridge2Name="$bgp2BridgeName"
+
+#detach_bridge_interface
+bridge_interface detach $bridge1Interface $bridge1Name
+bridge_interface detach $bridge2Interface $bridge2Name
+compose_down $SERVICE_LIBRARY
+#remove_running_conf_file
+rm_running_config
+
+#sudo docker-compose -p routing -f compose.yaml down

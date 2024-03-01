@@ -115,9 +115,13 @@ bgp_library()
   {     
     [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
     bgp1BS=$(echo $bgp1BridgeSubnet | sed -e "s.\/.\\\/.g")
+    bgp1v6BS=$(echo $bgp1v6BridgeSubnet | sed -e "s.\/.\\\/.g" )
     bgp2BS=$(echo $bgp2BridgeSubnet | sed -e "s.\/.\\\/.g")
+    bgp2v6BS=$(echo $bgp2v6BridgeSubnet | sed -e "s.\/.\\\/.g" )
     [ $DEBUG = true ] && echo "    bgp1BS: $bgp1BS"
     [ $DEBUG = true ] && echo "    bgp2BS: $bgp2BS"
+    [ $DEBUG = true ] && echo "    bgp1v6BS: $bgp1v6BS"
+    [ $DEBUG = true ] && echo "    bgp2v6BS: $bgp2v6BS"
   
     cat $composeSampleFile | \
     sed -e "s/\$bgp1IpAddress/$bgp1IpAddress/g" \
@@ -128,7 +132,11 @@ bgp_library()
       -e "s/\$bgp4BridgeName/$bgp4BridgeName/g" \
       -e "s/\$bgp5BridgeName/$bgp5BridgeName/g" | \
       sed -e "s/\$bgp1BridgeSubnet/$bgp1BS/g" \
-      -e "s/\$bgp2BridgeSubnet/$bgp2BS/g" > $composeDestFile
+      -e "s/\$bgp2BridgeSubnet/$bgp2BS/g" | \
+      sed -e "s/\$bgp1Ipv6Address/$bgp1Ipv6Address/g" \
+      -e "s/\$bgp2Ipv6Address/$bgp2Ipv6Address/g" \
+      -e "s/\$bgp2v6BridgeSubnet/$bgp2v6BS/g" \
+      -e "s/\$bgp1v6BridgeSubnet/$bgp1v6BS/g" > $composeDestFile
 
     [ $DEBUG = true ] && echo "    created compose file $composeDestFile"
   }

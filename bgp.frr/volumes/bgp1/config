@@ -1,0 +1,9 @@
+#!/usr/bin/env ash
+
+# configuration parameters
+
+# loopback interface
+lo_name=lo10
+lo_ip=10.255.255.5/32
+h_name=bgp1
+

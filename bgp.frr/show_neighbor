@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+[ $# -eq 0 ] && serviceName="bgp1" || serviceName="$1"
+
+echo ""
+echo "######## bgp neighbors of $serviceName"
+docker exec -it $serviceName ash -c "vtysh -c 'show bgp summary'"
+
+#echo "######## mpls ldp neighbors of $serviceName"
+#docker exec -it $serviceName ash -c "vtysh -c 'show mpls ldp neighbor'"

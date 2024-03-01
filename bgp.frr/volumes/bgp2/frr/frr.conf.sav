@@ -1,0 +1,40 @@
+frr version 8.4_git
+frr defaults traditional
+hostname bgp2
+no ipv6 forwarding
+!
+interface eth0
+ description "to system-under-test"
+ ip address 192.168.2.2/24
+ ipv6 address fd00::192:168:2:2/112
+exit
+!
+interface eth1
+ description "to router ospf30"
+ ip address 10.0.2.2/24
+ ipv6 address fd00::10:0:2:2/112
+exit
+!
+interface lo10
+ ip address 10.255.255.2/32
+ ipv6 address fd00::10:255:255:2/128
+exit
+!
+router bgp 65020
+ bgp router-id 10.255.255.2
+ no bgp ebgp-requires-policy
+ neighbor 10.0.2.3 remote-as 65030
+ neighbor 10.0.2.3 description "bgp3"
+ neighbor 10.0.2.3 password passwd
+ neighbor 192.168.2.20 remote-as 65200
+ neighbor 192.168.2.20 description "SUT"
+ neighbor 192.168.2.20 password passwd
+ !
+ address-family ipv4 unicast
+  network 10.255.255.2/32
+  redistribute connected
+  neighbor 10.0.2.3 soft-reconfiguration inbound
+  neighbor 192.168.2.20 soft-reconfiguration inbound
+ exit-address-family
+exit
+!

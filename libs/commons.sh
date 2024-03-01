@@ -205,7 +205,7 @@ commons_library()
 
   compose_up()
   {
-    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]}"
+    [ $DEBUG = true ] && echo "  ${FUNCNAME[0]} $1"
     case $1 in
       aaa)
         sudo docker-compose -p radius -f compose.yaml up -d

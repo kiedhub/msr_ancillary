@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+[ $# -eq 0 ] && serviceName="ospf10" || serviceName="$1"
+
+echo "Script directory: $SCRIPT_DIR"
+vi $SCRIPT_DIR/customize/$serviceName/frr/daemons
+
+#docker exec -it $serviceName ash -c 'bash'

@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+SERVICE_LIBRARY="bgp"
+DEBUG=true
+
+# grab configuration
+BGP_SOURCE=${BASH_SOURCE[0]}
+BGP_SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+. $BGP_SCRIPT_DIR/../functions.sh
+
+cd $BGP_SCRIPT_DIR
+
+# load kernel modules for mpls
+$enableMplsLdp && enable_mpls_kernel
+
+composeSampleFile="$BGP_SCRIPT_DIR/compose_sample.yaml"
+composeDestFile="$BGP_SCRIPT_DIR/compose.yaml"
+
+bridge1Interface="$bgp1Interface.$bgp1InterfaceVlan"
+bridge1Name="$bgp1BridgeName"
+bridge2Interface="$bgp2Interface.$bgp2InterfaceVlan"
+bridge2Name="$bgp2BridgeName"
+
+build_compose_file
+# create cidr notation and update config files
+# currently only bgp1 and bgp2 require configs to be updated
+prefix_from_cidr $bgp1BridgeSubnet
+bgp1IpPrefix="$pfcPrefix"
+bgp1IpAddressCidr="$bgp1IpAddress/$bgp1IpAddressPrefix"
+
+prefix_from_cidr $bgp2BridgeSubnet
+bgp2IpPrefix="$pfcPrefix"
+bgp2IpAddressCidr="$bgp2IpAddress/$bgp2IpAddressPrefix"
+
+# check whether we need to rebuild the configuration
+check_prev_config "bgp1IpAddress"
+sameO1Ip=$cpcOldEqNew
+check_prev_config "bgp1BridgeSubnet"
+sameO1Bs=$cpcOldEqNew
+check_prev_config "bgp2IpAddress"
+sameO2Ip=$cpcOldEqNew
+check_prev_config "bgp2BridgeSubnet"
+sameO2Bs=$cpcOldEqNew
+
+# rebuild only if one is not the same
+if ! ( $sameO1Ip && $sameO1Bs && $sameO2Ip && $sameO2Bs ); then
+ build_frr_config 
+else
+  echo "No IP configuration change keep router config as is."
+fi
+
+wr_running_config $BGP_SCRIPT_DIR
+
+compose_up $SERVICE_LIBRARY 
+
+bridge_interface attach $bridge1Interface $bridge1Name
+bridge_interface attach $bridge2Interface $bridge2Name
+
+# enable mpls on interfaces
+if $enableMplsLdp; then
+  enable_mpls_if $bridge1Interface
+  enable_mpls_if $bridge2Interface
+fi
+
+exit
+
+# need to get ipv6 address configuration into the container. Docker compose doesn't
+# seem to work
+cp $BGP_SCRIPT_DIR/running.conf $BGP_SCRIPT_DIR/volumes/bgp1/running.conf
+cp $BGP_SCRIPT_DIR/running.conf $BGP_SCRIPT_DIR/volumes/bgp2/running.conf
+cp $BGP_SCRIPT_DIR/running.conf $BGP_SCRIPT_DIR/volumes/bgp3/running.conf
+cp $BGP_SCRIPT_DIR/running.conf $BGP_SCRIPT_DIR/volumes/dn/running.conf

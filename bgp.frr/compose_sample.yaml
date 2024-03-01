@@ -1,0 +1,145 @@
+version: '3'
+
+#- /home/ralf/docker/bird-routing/bgp_sample/volumes:/tmp/volumes:ro
+# sudo docker run -d  -p 55022:22 --name bird1 bird
+services:
+  isp1:
+    container_name: bgp1
+    image: rsattler/frrouter:latest   # should be version 8.4.1
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+#    ports:
+#      - "55052:22"
+    networks:
+      msr_isp1:
+        ipv4_address: $bgp1IpAddress
+        ipv6_address: $bgp1Ipv6Address
+      isp1_isp3:
+        ipv4_address: 10.0.1.5
+        ipv6_address: fd00::10:0:1:5
+    volumes:
+#      - ./customize/isp1:/tmp/customize:ro
+      - ./volumes/bgp1/frr:/etc/frr:rw
+      - ./volumes/bgp1/init-functions:/lib/lsb/init-functions
+      - ./volumes/bgp1/config:/tmp/config:ro
+    cap_add:
+      - NET_ADMIN
+      - CAP_SYS_ADMIN
+  isp2:
+    image: rsattler/frrouter:latest   # should be version 8.4.1
+    container_name: bgp2
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+#    ports:
+#      - "55053:22"
+    networks:
+      msr_isp2:
+        ipv4_address: $bgp2IpAddress
+        ipv6_address: $bgp2Ipv6Address
+      isp2_isp3:
+        ipv4_address: 10.0.2.2
+        ipv6_address: fd00::10:0:2:2
+    volumes:
+#      - ./customize/isp2:/tmp/customize:ro
+      - ./volumes/bgp2/frr:/etc/frr:rw
+      - ./volumes/bgp2/init-functions:/lib/lsb/init-functions
+      - ./volumes/bgp2/config:/tmp/config:ro
+    cap_add:
+      - NET_ADMIN
+      - CAP_SYS_ADMIN
+  isp3:
+    image: rsattler/frrouter:latest   # should be version 8.4.1
+    container_name: bgp3
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+#    ports:
+#      - "55054:22"
+    networks:
+      isp1_isp3:
+        ipv4_address: 10.0.1.3
+        ipv6_address: fd00::10:0:1:3
+      isp2_isp3:
+        ipv4_address: 10.0.2.3
+        ipv6_address: fd00::10:0:2:3
+      isp3_dn:
+        ipv4_address: 10.20.0.3
+        ipv6_address: fd00::10:20:0:3
+    volumes:
+#      - ./customize/isp3:/tmp/customize:ro
+      - ./volumes/bgp3/frr:/etc/frr:rw
+      - ./volumes/bgp3/init-functions:/lib/lsb/init-functions
+      - ./volumes/bgp3/config:/tmp/config:ro
+    cap_add:
+      - NET_ADMIN
+      - CAP_SYS_ADMIN
+  dn:
+    image: rsattler/frrouter:latest   # should be version 8.4.1
+    container_name: bgp_dn
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+#    ports:
+#      - "55055:22"
+    networks:
+      isp3_dn:
+        ipv4_address: 10.20.0.30
+        ipv6_address: fd00::10:20:0:30
+    volumes:
+#      - ./customize/dn:/tmp/customize:ro
+      - ./volumes/dn/init-functions:/lib/lsb/init-functions
+      - ./volumes/dn/config:/tmp/config:ro
+    cap_add:
+      - NET_ADMIN
+      - CAP_SYS_ADMIN
+
+networks:
+  msr_isp1:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: $bgp1BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: $bgp1BridgeSubnet
+        - subnet: $bgp1v6BridgeSubnet
+  msr_isp2:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: $bgp2BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: $bgp2BridgeSubnet
+        - subnet: $bgp2v6BridgeSubnet
+  isp1_isp3:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: $bgp3BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.1.0/24
+        - subnet: fd00::10:0:1:0/112
+  isp2_isp3:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: $bgp4BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.2.0/24
+        - subnet: fd00::10:0:2:0/112
+  isp3_dn:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+      com.docker.network.bridge.name: $bgp5BridgeName
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.20.0.0/24
+        - subnet: fd00::20:0:0:0/112
