@@ -1,6 +1,9 @@
 
 testing Cleartext-Password := "password"
 
+# ancillary vm subscribers (MAC addresses start with 02)
+DEFAULT User-Name =~ '02:*', Cleartext-Password := 'casaipoe'
+
 # spirent ipoe sub
 00:10:94:00:00:37 Cleartext-Password := "casaipoe"
 #  Casa-Activate-DT = "30 s_Res_100Mbps"

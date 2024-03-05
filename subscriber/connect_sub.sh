@@ -43,6 +43,8 @@ usage()
   echo "     pppoe4  - pppoe IPv4 only"
 #  echo "     pppoe6  - pppoe IPv6 only (not yet supported)"
   echo "     pppoeds - pppoe dual-stack"
+  echo " -u  username for authenticatione, e.g. pppoe"
+  echo " -p  password for authenticatione, e.g. pppoe"
   echo " GRE-Tunnel specific parameters"
   echo " -l  GreInterface: local tunnel-interface, dotted notation for VLAN configuration (e.g. ens8.111.222)"
   echo "     The interface must not yet exist and gets created."
@@ -58,6 +60,8 @@ usage()
 get_subconfig $subName
 subInterface=$gsInterface
 subAccessProto=$gsAccessProto
+subAuthUserName=$gsAuthUserName
+subAuthPassWord=$gsAuthPassWord
 # new params from gre enhancement
 subGreEnabled=$gsGreEnabled
 subGreInterface=$gsGreInterface
@@ -67,7 +71,8 @@ subGreTunnelEndpoint=$gsGreTunnelEndpoint
 
 subGreTunnelConf="$subName $subGreInterface $subGreInterfaceIp $subGreRemInterfaceIp $subGreTunnelEndpoint $subInterface"
 
-while getopts ":i:t:h:l:I:R:r:" option; do
+
+while getopts ":i:t:h:l:I:R:r:u:p:" option; do
   case $option in
      i) 
        subInterface=$OPTARG
@@ -93,15 +98,27 @@ while getopts ":i:t:h:l:I:R:r:" option; do
        subGreTunnelEndpoint=$OPTARG
        ! [ -z $subGreTunnelEndpoint ] && echo "Overwriting access protocol type with $subGreTunnelEndpoint"
        ;;
+     u)
+       subAuthUserName=$OPTARG
+       ! [ -z $subAuthUserName ] && echo "Overwriting authentication username type with $subAuthUserName"
+       ;;
+     p)
+       subAuthPassWord=$OPTARG
+       ! [ -z $subAuthPassWord ] && echo "Overwriting authentication password type with $subAuthPassWord"
+       ;;
   esac
 done
 
 [ $DEBUG = true ] && echo "Name: $subName, Interface: $subInterface, AccessProto: $subAccessProto"
+[ $DEBUG = true ] && echo "AuthUserName: $subAuthUserName, AuthPassWord: $subAuthPassWord"
+[ $DEBUG = true ] && echo "GRE Enabled: $subGreEnabled"
   
 # set up gre tunnel
-$subGreEnabled && echo "Setting up GRE Tunnel"; subscriber_gretunnel_create $subGreTunnelConf
+$subGreEnabled && { echo "Setting up GRE Tunnel"; \
+  subscriber_gretunnel_create $subGreTunnelConf; \
+}
 
-subscriber_session_create $subInterface $subName $subAccessProto
+subscriber_session_create $subInterface $subName $subAccessProto $subAuthUserName $subAuthPassWord
 
 exit
 

@@ -21,12 +21,15 @@ subscriber_library()
   
     gsIfVarName="$gsSubId""Interface"
     gsApVarName="$gsSubId""AccessProto"
+    gsAUnVarName="$gsSubId""AuthUserName"
+    gsAPwVarName="$gsSubId""AuthPassWord"
     # additional params for soft-gre connectivity
     gsGeVarName="$gsSubId""GreEnabled"
     gsGIfVarName="$gsSubId""GreInterface"
     gsGIfIpVarName="$gsSubId""GreInterfaceIp"
     gsGRemIfIpVarName="$gsSubId""GreRemInterfaceIp"
     gsGTEVarName="$gsSubId""GerTunnelEndpoint"
+
 
     [ -z ${!gsIfVarName} ] && { \
       [ $DEBUG = true ] && echo "  No if config for subscriber \"$gsSubName\" "; \
@@ -37,6 +40,16 @@ subscriber_library()
       [ $DEBUG = true ] && echo "  No access proto config for subscriber \"$gsSubName\""; \
       } || { gsAccessProto=${!gsApVarName}; \
       [ $DEBUG = true ] && echo "  $gsApVarName : $gsAccessProto"; }
+
+    [ -z ${!gsAUnVarName} ] && { \
+      [ $DEBUG = true ] && echo "  No Auth UserName config for subscriber \"$gsSubName\" "; \
+      } || { gsAuthUserName=${!gsAUnVarName}; \
+      [ $DEBUG = true ] && echo "  $gsAUnVarName : $gsAuthUserName"; }
+
+    [ -z ${!gsAPwVarName} ] && { \
+      [ $DEBUG = true ] && echo "  No Auth PassWord config for subscriber \"$gsSubName\" "; \
+      } || { gsAuthPassWord=${!gsAPwVarName}; \
+      [ $DEBUG = true ] && echo "  $gsAPwVarName : $gsAuthPassWord"; }
 
     [ -z ${!gsGeVarName} ] && { \
       [ $DEBUG = true ] && echo "  No gsGeVarName config for subscriber \"$gsSubName\", setting it to 'false' "; \
@@ -63,6 +76,9 @@ subscriber_library()
       [ $DEBUG = true ] && echo "  No gsGTEVarName config for subscriber \"$gsSubName\" "; \
       } || { gsGreTunnelEndpoint=${!gsGTEVarName}; \
       [ $DEBUG = true ] && echo "  $gsGTEVarName : $gsGreTunnelEndpoint"; }
+
+    [ $DEBUG = true ] && echo "  gsGeVarName: $gsGeVarName"
+    [ $DEBUG = true ] && echo "  gsGreEnabled : $gsGreEnabled"
   }
 
   subscriber_config_remove()
@@ -355,9 +371,22 @@ subscriber_library()
     # sets up subscriber interface and connects sub to BNG 
     # requires: interface as $1, sub-name as $2 and access-proto as $3
 
-    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (Interface: $1, SubscriberName: $2, \
-      Access Protocol: $3)"
+    #[ "$#" -lt 5 ] && { \
+    #  sscUn="casa"; sscPw="casa"; \
+    #  [ $DEBUG = true ] && echo "  Not enough args, setting Auth-UserName: $sscUn and Auth-Password: $ssPw"; \
+    #}
 
+    [ $DEBUG = true ] && echo "${FUNCNAME[0]} (Interface: $1, SubscriberName: $2, \
+      Access Protocol: $3, Auth-UserName: $4, Auth-Password: $5)"
+
+    # username and password are only required for pppoe authentication via radius. 
+    # we set them to default values, even if not required
+    [ "$#" -lt 5 ] && { \
+      sscUn="casa"; sscPw="casa"; \
+      [ $DEBUG = true ] && echo "  Not enough args, setting Auth-UserName: $sscUn and Auth-Password: $ssPw"; \
+    } || { sscUn=$4; sscPw=$5; }
+
+    # minimum set of arguments
     sscIf=$1
     sscSn=$2
     sscAp=$3
@@ -429,7 +458,8 @@ subscriber_library()
         pppIPv6option remove
         [ $DEBUG = true ] && echo "  create file /etc/ppp/peers/dsl-provider100"
         subPty="pty \"\/usr\/sbin\/pppoe -I $sscIf -T 80 -m 1452\""
-        sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" -e "s/^auth/noauth/" > \
+        sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" -e "s/^auth/noauth/" \
+	  -e "s/#user.*/user $sscUn\n\password $sscPw/" > \
           /etc/ppp/peers/dsl-provider100
         ip netns exec $sscSn pon dsl-provider100
         ;;
@@ -439,7 +469,8 @@ subscriber_library()
         pppIPv6option add
         [ $DEBUG = true ] && echo "  create file /etc/ppp/peers/dsl-provider100"
         subPty="pty \"\/usr\/sbin\/pppoe -I $sscIf -T 80 -m 1452\""
-        sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" -e "s/^auth/noauth/" > \
+        sudo cat /etc/ppp/peers/dsl-provider | sed -e "s/^pty .*$/$subPty/" -e "s/^auth/noauth/" \
+	  -e "s/#user.*/user $sscUn\n\password $sscPw/" > \
           /etc/ppp/peers/dsl-provider100
         ip netns exec $sscSn pon dsl-provider100
         ;;
