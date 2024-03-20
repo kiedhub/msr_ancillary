@@ -25,7 +25,7 @@ SET_DNS=false
 
 usage()
 {
-  echo "Usage: connect_subscriber.sh [ -i interface ] [ -t connectivity-type ] <subsciber-name>"
+  echo "Usage: connect_subscriber.sh [ -i interface ] [ -t connectivity-type ] <subscriber-name>"
   echo "Connects a new subscriber. Optional arguments can be used to overwrite or complement"
   echo "  the subscribers' configuration in ancillary.conf"
   echo "Options"
@@ -54,7 +54,7 @@ usage()
   echo "     The default route from -I to -r will be automaticall generated automatically (via -R)"
 }
 
-[ -z $1 ] && { echo "Error: Missing subscriber name"; usage ; exit; } || subName=${@: -1}
+[ "$#" -lt 1 ] && { echo "Error: Missing subscriber name"; usage ; exit; } || subName=${@: -1}
 
 # lookup subscriber in ancillary.conf
 get_subconfig $subName
@@ -105,6 +105,10 @@ while getopts ":i:t:h:l:I:R:r:u:p:" option; do
      p)
        subAuthPassWord=$OPTARG
        ! [ -z $subAuthPassWord ] && echo "Overwriting authentication password type with $subAuthPassWord"
+       ;;
+     *)
+       usage
+       exit
        ;;
   esac
 done

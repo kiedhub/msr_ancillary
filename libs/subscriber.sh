@@ -474,6 +474,11 @@ subscriber_library()
           /etc/ppp/peers/dsl-provider100
         ip netns exec $sscSn pon dsl-provider100
         ;;
+      dslite)
+        subscriber_backup_dhclient_leases v6 $sscSn
+        #ip netns exec $sscSn dhclient -6 -P -N -v $sscIf
+        #dhclient -6 -P -N -v $sscIf
+        ;;
       *)
         [ $DEBUG = true ] && echo "  Unknown subscriber type: $sscAp, exiting"
         exit
@@ -566,6 +571,12 @@ subscriber_library()
         ;;
       pppoeds)
         ip netns exec $ssrSn poff dsl-provider100
+        ;;
+      dslite)
+        ip netns exec $ssrSn dhclient -6 -r
+        subscriber_restore_dhclient_leases v6 $ssrSn
+        #sudo rm /var/lib/dhclient6.leases
+        #dhclient -6 -P -N -v $ssrIf
         ;;
       *)
         [ $DEBUG = true ] && echo "  Unknown subscriber type: $ssrAp, exiting"
